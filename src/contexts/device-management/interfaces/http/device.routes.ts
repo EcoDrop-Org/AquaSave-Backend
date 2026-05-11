@@ -1,0 +1,68 @@
+import { Router } from 'express';
+import { z } from 'zod';
+
+import type { AppServices } from '../../../../composition-root.js';
+import { asyncHandler } from '../../../../shared/http/async-handler.js';
+import {
+  authMiddleware,
+  requireAuth,
+} from '../../../../shared/http/auth.middleware.js';
+import { param } from '../../../../shared/http/params.js';
+
+const locationSchema = z.object({
+  label: z.string().min(3),
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional(),
+});
+
+const pairDeviceSchema = z.object({
+  name: z.string().min(3),
+  location: locationSchema,
+  plantCount: z.number().int().min(1).max(1000).optional(),
+  cropType: z.string().min(2).optional(),
+  firmwareVersion: z.string().min(1).optional(),
+});
+
+export const createDeviceRouter = (services: AppServices) => {
+  const router = Router();
+
+  router.use(authMiddleware(services));
+
+  router.get(
+    '/',
+    asyncHandler(async (req, res) => {
+      const { accountId } = requireAuth(req);
+      const devices = await services.deviceManagement.listDevices.execute(
+        accountId,
+      );
+      res.json({ devices });
+    }),
+  );
+
+  router.post(
+    '/',
+    asyncHandler(async (req, res) => {
+      const { accountId } = requireAuth(req);
+      const input = pairDeviceSchema.parse(req.body);
+      const device = await services.deviceManagement.pairDevice.execute({
+        ...input,
+        accountId,
+      });
+      res.status(201).json({ device });
+    }),
+  );
+
+  router.get(
+    '/:deviceId',
+    asyncHandler(async (req, res) => {
+      const { accountId } = requireAuth(req);
+      const device = await services.deviceManagement.getDevice.execute(
+        param(req.params, 'deviceId'),
+        accountId,
+      );
+      res.json({ device });
+    }),
+  );
+
+  return router;
+};
