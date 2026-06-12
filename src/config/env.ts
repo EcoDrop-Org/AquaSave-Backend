@@ -7,8 +7,16 @@ export type AppEnv = {
   nodeEnv: string;
   allowedOrigins: string[];
   dataDir: string;
+  databaseUrl: string;
+  jwtSecret: string;
   edgeApiKey?: string;
   weatherProvider: 'open-meteo';
+};
+
+const required = (name: string): string => {
+  const value = process.env[name]?.trim();
+  if (!value) throw new Error(`Missing required environment variable: ${name}`);
+  return value;
 };
 
 const optional = (value: string | undefined): string | undefined => {
@@ -24,6 +32,8 @@ export const env: AppEnv = {
     .map((origin) => origin.trim())
     .filter(Boolean),
   dataDir: process.env.DATA_DIR ?? './data',
+  databaseUrl: required('DATABASE_URL'),
+  jwtSecret: required('JWT_SECRET'),
   edgeApiKey: optional(process.env.EDGE_API_KEY),
   weatherProvider: 'open-meteo',
 };

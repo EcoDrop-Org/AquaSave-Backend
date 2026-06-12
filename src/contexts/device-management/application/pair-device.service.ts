@@ -23,7 +23,7 @@ export class PairDeviceService {
       accountId: input.accountId,
       name: input.name.trim(),
       location: createGeoLocation(input.location),
-      status: 'online',
+      status: 'offline',
       firmwareVersion: input.firmwareVersion,
       isActive: true,
       plantCount: input.plantCount ?? 1,
