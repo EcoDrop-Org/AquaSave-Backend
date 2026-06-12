@@ -24,13 +24,19 @@ const optional = (value: string | undefined): string | undefined => {
   return trimmed ? trimmed : undefined;
 };
 
+const parseAllowedOrigins = (value: string | undefined): string[] => {
+  const origins = (value ?? '*')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+  // Una variable vacia bloquearia todos los origenes; mejor permitir todos.
+  return origins.length > 0 ? origins : ['*'];
+};
+
 export const env: AppEnv = {
   port: Number(process.env.PORT ?? 3000),
   nodeEnv: process.env.NODE_ENV ?? 'development',
-  allowedOrigins: (process.env.ALLOWED_ORIGINS ?? '*')
-    .split(',')
-    .map((origin) => origin.trim())
-    .filter(Boolean),
+  allowedOrigins: parseAllowedOrigins(process.env.ALLOWED_ORIGINS),
   dataDir: process.env.DATA_DIR ?? './data',
   databaseUrl: required('DATABASE_URL'),
   jwtSecret: required('JWT_SECRET'),
