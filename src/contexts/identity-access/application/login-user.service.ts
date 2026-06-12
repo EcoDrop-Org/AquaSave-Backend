@@ -1,10 +1,8 @@
-import { badRequest, unauthorized } from '../../../shared/http/http-error.js';
-import { isSessionValid } from '../domain/app-session.js';
-import type { SessionRepository } from '../domain/repositories/session-repository.js';
+import { unauthorized } from '../../../shared/http/http-error.js';
 import type { UserRepository } from '../domain/repositories/user-repository.js';
+import { JwtService } from '../domain/services/jwt-service.js';
 import { PasswordHasher } from '../domain/services/password-hasher.js';
 import { toPublicUser, type PublicUser } from '../domain/user.js';
-import { createSession } from './session-factory.js';
 
 export type LoginUserInput = {
   email: string;
@@ -20,7 +18,7 @@ export type LoginResult = {
 export class LoginUserService {
   constructor(
     private readonly users: UserRepository,
-    private readonly sessions: SessionRepository,
+    private readonly jwtService: JwtService,
     private readonly passwordHasher: PasswordHasher,
   ) {}
 
@@ -43,15 +41,13 @@ export class LoginUserService {
       user.id,
       new Date().toISOString(),
     );
-    const session = await this.sessions.save(createSession(user.id));
-    if (!isSessionValid(session)) {
-      throw badRequest('Could not start session');
-    }
+
+    const { token, expiresAt } = this.jwtService.sign(user.id);
 
     return {
       user: toPublicUser(updatedUser),
-      token: session.token,
-      expiresAt: session.expiresAt,
+      token,
+      expiresAt,
     };
   }
 }

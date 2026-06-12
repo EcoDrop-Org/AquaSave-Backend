@@ -5,9 +5,8 @@ import { normalizeProfileType, type ProfileType } from '../domain/profile-type.j
 import type { User } from '../domain/user.js';
 import { toPublicUser, type PublicUser } from '../domain/user.js';
 import type { UserRepository } from '../domain/repositories/user-repository.js';
+import { JwtService } from '../domain/services/jwt-service.js';
 import { PasswordHasher } from '../domain/services/password-hasher.js';
-import type { SessionRepository } from '../domain/repositories/session-repository.js';
-import { createSession } from './session-factory.js';
 
 export type RegisterUserInput = {
   email: string;
@@ -28,7 +27,7 @@ export type AuthResult = {
 export class RegisterUserService {
   constructor(
     private readonly users: UserRepository,
-    private readonly sessions: SessionRepository,
+    private readonly jwtService: JwtService,
     private readonly passwordHasher: PasswordHasher,
   ) {}
 
@@ -57,12 +56,12 @@ export class RegisterUserService {
     };
 
     const saved = await this.users.save(user);
-    const session = await this.sessions.save(createSession(saved.id));
+    const { token, expiresAt } = this.jwtService.sign(saved.id);
 
     return {
       user: toPublicUser(saved),
-      token: session.token,
-      expiresAt: session.expiresAt,
+      token,
+      expiresAt,
     };
   }
 }

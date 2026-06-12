@@ -1,9 +1,4 @@
-import type { SessionRepository } from '../domain/repositories/session-repository.js';
-
+// JWT is stateless — the client discards the token on logout.
 export class LogoutUserService {
-  constructor(private readonly sessions: SessionRepository) {}
-
-  async execute(token: string): Promise<void> {
-    await this.sessions.revokeByToken(token, new Date().toISOString());
-  }
+  async execute(_token: string): Promise<void> {}
 }

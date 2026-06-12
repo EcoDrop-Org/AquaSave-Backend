@@ -1,12 +1,16 @@
 import { Router } from 'express';
+import { z } from 'zod';
 
 import type { AppServices } from '../../../../composition-root.js';
-import { badRequest } from '../../../../shared/http/http-error.js';
 import { asyncHandler } from '../../../../shared/http/async-handler.js';
 import {
   authMiddleware,
   requireAuth,
 } from '../../../../shared/http/auth.middleware.js';
+
+const forecastQuerySchema = z.object({
+  deviceId: z.string().min(1, 'deviceId is required'),
+});
 
 export const createWeatherRouter = (services: AppServices) => {
   const router = Router();
@@ -17,10 +21,7 @@ export const createWeatherRouter = (services: AppServices) => {
     '/forecast',
     asyncHandler(async (req, res) => {
       const { accountId } = requireAuth(req);
-      const deviceId = String(req.query.deviceId ?? '');
-      if (!deviceId) {
-        throw badRequest('Query parameter deviceId is required');
-      }
+      const { deviceId } = forecastQuerySchema.parse(req.query);
 
       const forecast =
         await services.irrigationIntelligence.getWeatherForecast.execute(
