@@ -89,6 +89,35 @@ export class PgDeviceRepository implements DeviceRepository {
     return device;
   }
 
+  async update(device: Device): Promise<Device> {
+    const rows = await this.sql<DeviceRow[]>`
+      UPDATE devices
+      SET name               = ${device.name},
+          location_label     = ${device.location.label},
+          location_latitude  = ${device.location.latitude ?? null},
+          location_longitude = ${device.location.longitude ?? null},
+          status             = ${device.status},
+          firmware_version   = ${device.firmwareVersion ?? null},
+          is_active          = ${device.isActive},
+          plant_count        = ${device.plantCount},
+          crop_type          = ${device.cropType ?? null},
+          valve_state        = ${device.valveState},
+          last_telemetry     = ${device.lastTelemetry ? this.sql.json(device.lastTelemetry) : null},
+          updated_at         = NOW()
+      WHERE id = ${device.id}
+      RETURNING *
+    `;
+    const row = rows[0];
+    if (!row) throw notFound('Device not found');
+    return rowToDevice(row);
+  }
+
+  async deleteById(deviceId: string): Promise<void> {
+    await this.sql`DELETE FROM irrigation_events WHERE device_id = ${deviceId}`;
+    await this.sql`DELETE FROM edge_commands WHERE device_id = ${deviceId}`;
+    await this.sql`DELETE FROM devices WHERE id = ${deviceId}`;
+  }
+
   async updateStatus(deviceId: string, status: DeviceStatus, firmwareVersion?: string): Promise<Device> {
     const rows = await this.sql<DeviceRow[]>`
       UPDATE devices

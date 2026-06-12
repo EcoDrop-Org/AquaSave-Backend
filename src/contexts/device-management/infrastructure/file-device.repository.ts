@@ -38,12 +38,22 @@ export class FileDeviceRepository implements DeviceRepository {
     return device;
   }
 
+  async update(device: Device): Promise<Device> {
+    return this.mutate(device.id, () => device);
+  }
+
+  async deleteById(deviceId: string): Promise<void> {
+    const data = await this.store.read();
+    data.devices = data.devices.filter((device) => device.id !== deviceId);
+    await this.store.write(data);
+  }
+
   async updateStatus(
     deviceId: string,
     status: DeviceStatus,
     firmwareVersion?: string,
   ): Promise<Device> {
-    return this.update(deviceId, (device) => ({
+    return this.mutate(deviceId, (device) => ({
       ...device,
       status,
       firmwareVersion: firmwareVersion ?? device.firmwareVersion,
@@ -54,7 +64,7 @@ export class FileDeviceRepository implements DeviceRepository {
     deviceId: string,
     reading: SensorReading,
   ): Promise<Device> {
-    return this.update(deviceId, (device) => ({
+    return this.mutate(deviceId, (device) => ({
       ...device,
       status: 'online',
       lastTelemetry: reading,
@@ -65,13 +75,13 @@ export class FileDeviceRepository implements DeviceRepository {
     deviceId: string,
     valveState: ValveState,
   ): Promise<Device> {
-    return this.update(deviceId, (device) => ({
+    return this.mutate(deviceId, (device) => ({
       ...device,
       valveState,
     }));
   }
 
-  private async update(
+  private async mutate(
     deviceId: string,
     updateFn: (device: Device) => Device,
   ): Promise<Device> {

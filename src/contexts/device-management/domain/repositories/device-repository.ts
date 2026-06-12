@@ -6,6 +6,8 @@ export interface DeviceRepository {
   findById(deviceId: string): Promise<Device | undefined>;
   findByAccountId(accountId: string): Promise<Device[]>;
   save(device: Device): Promise<Device>;
+  update(device: Device): Promise<Device>;
+  deleteById(deviceId: string): Promise<void>;
   updateStatus(
     deviceId: string,
     status: DeviceStatus,

@@ -11,6 +11,8 @@ import { GetDeviceQuery } from './contexts/device-management/application/get-dev
 import { ListDevicesQuery } from './contexts/device-management/application/list-devices.query.js';
 import { PairDeviceService } from './contexts/device-management/application/pair-device.service.js';
 import { RecordTelemetryService } from './contexts/device-management/application/record-telemetry.service.js';
+import { UnpairDeviceService } from './contexts/device-management/application/unpair-device.service.js';
+import { UpdateDeviceService } from './contexts/device-management/application/update-device.service.js';
 import { UpdateDeviceStatusService } from './contexts/device-management/application/update-device-status.service.js';
 import { PgDeviceRepository } from './contexts/device-management/infrastructure/pg-device.repository.js';
 import { GetIrrigationStateQuery } from './contexts/irrigation-intelligence/application/get-irrigation-state.query.js';
@@ -62,6 +64,8 @@ export const buildServices = (env: AppEnv, sql: PgClient) => {
       pairDevice: new PairDeviceService(deviceRepository),
       listDevices: new ListDevicesQuery(deviceRepository),
       getDevice: new GetDeviceQuery(deviceRepository),
+      updateDevice: new UpdateDeviceService(deviceRepository),
+      unpairDevice: new UnpairDeviceService(deviceRepository),
       recordTelemetry: new RecordTelemetryService(deviceRepository),
       updateDeviceStatus: new UpdateDeviceStatusService(deviceRepository),
       repository: deviceRepository,

@@ -23,6 +23,13 @@ const pairDeviceSchema = z.object({
   firmwareVersion: z.string().min(1).optional(),
 });
 
+const updateDeviceSchema = z.object({
+  name: z.string().min(3).optional(),
+  location: locationSchema.optional(),
+  plantCount: z.number().int().min(1).max(1000).optional(),
+  cropType: z.string().min(2).nullable().optional(),
+});
+
 export const createDeviceRouter = (services: AppServices) => {
   const router = Router();
 
@@ -61,6 +68,32 @@ export const createDeviceRouter = (services: AppServices) => {
         accountId,
       );
       res.json({ device });
+    }),
+  );
+
+  router.patch(
+    '/:deviceId',
+    asyncHandler(async (req, res) => {
+      const { accountId } = requireAuth(req);
+      const input = updateDeviceSchema.parse(req.body);
+      const device = await services.deviceManagement.updateDevice.execute({
+        ...input,
+        deviceId: param(req.params, 'deviceId'),
+        accountId,
+      });
+      res.json({ device });
+    }),
+  );
+
+  router.delete(
+    '/:deviceId',
+    asyncHandler(async (req, res) => {
+      const { accountId } = requireAuth(req);
+      await services.deviceManagement.unpairDevice.execute(
+        param(req.params, 'deviceId'),
+        accountId,
+      );
+      res.status(204).send();
     }),
   );
 

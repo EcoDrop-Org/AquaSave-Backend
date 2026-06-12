@@ -114,6 +114,15 @@ export const openApiDocument = {
           firmwareVersion: { type: 'string', example: '1.0.0' },
         },
       },
+      UpdateDeviceRequest: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', example: 'Huerto terraza' },
+          location: { $ref: '#/components/schemas/GeoLocation' },
+          plantCount: { type: 'integer', minimum: 1, example: 8 },
+          cropType: { type: 'string', nullable: true, example: 'Hortalizas' },
+        },
+      },
       Device: {
         type: 'object',
         properties: {
@@ -308,6 +317,27 @@ export const openApiDocument = {
         parameters: [deviceIdParam()],
         responses: {
           '200': objectResponse('Device', 'Device found', 'device'),
+          '404': errorResponse('Device not found'),
+        },
+      },
+      patch: {
+        tags: ['Device Management'],
+        summary: 'Update one current-user device',
+        security: [{ bearerAuth: [] }],
+        parameters: [deviceIdParam()],
+        requestBody: jsonBody('UpdateDeviceRequest'),
+        responses: {
+          '200': objectResponse('Device', 'Device updated', 'device'),
+          '404': errorResponse('Device not found'),
+        },
+      },
+      delete: {
+        tags: ['Device Management'],
+        summary: 'Delete one current-user device',
+        security: [{ bearerAuth: [] }],
+        parameters: [deviceIdParam()],
+        responses: {
+          '204': { description: 'Device deleted' },
           '404': errorResponse('Device not found'),
         },
       },
