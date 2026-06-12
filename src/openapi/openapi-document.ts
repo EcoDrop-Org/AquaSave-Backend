@@ -8,8 +8,12 @@ export const openApiDocument = {
   },
   servers: [
     {
-      url: '',
-      description: 'Current server (local or production)',
+      url: 'https://aquasave-backend.onrender.com',
+      description: 'Production (Render)',
+    },
+    {
+      url: 'http://localhost:3000',
+      description: 'Local development',
     },
   ],
   tags: [
