@@ -84,19 +84,27 @@ export const createIrrigationRouter = (services: AppServices) => {
         if (!device || device.accountId !== accountId) throw notFound('Device not found');
       }
 
-      // Fetch all events for the device (or all user devices)
-      let events = deviceId
-        ? await services.irrigationIntelligence.eventRepository.findByDeviceId(deviceId)
-        : [];
+      // Fetch all user devices (always needed for cropBreakdown)
+      const allDevices = await services.deviceManagement.repository.findByAccountId(accountId);
 
-      if (!deviceId) {
-        // Fetch all user devices and aggregate
-        const devices = await services.deviceManagement.repository.findByAccountId(accountId);
-        const allEvents = await Promise.all(
-          devices.map(d => services.irrigationIntelligence.eventRepository.findByDeviceId(d.id))
-        );
-        events = allEvents.flat();
+      // Verify ownership if filtering by deviceId
+      if (deviceId) {
+        const target = allDevices.find(d => d.id === deviceId);
+        if (!target) throw notFound('Device not found');
       }
+
+      // Build a map deviceId → cropType for breakdown
+      const cropByDevice: Record<string, string> = {};
+      for (const d of allDevices) {
+        cropByDevice[d.id] = d.cropType ?? 'Otro';
+      }
+
+      // Fetch events
+      const devicesToFetch = deviceId ? [{ id: deviceId }] : allDevices;
+      const allEventArrays = await Promise.all(
+        devicesToFetch.map(d => services.irrigationIntelligence.eventRepository.findByDeviceId(d.id))
+      );
+      const events = allEventArrays.flat();
 
       const now = new Date();
       const cutoff = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -132,6 +140,16 @@ export const createIrrigationRouter = (services: AppServices) => {
       let running = 0;
       for (const v of dailyValues) { running += v; cumulative.push(parseFloat(running.toFixed(2))); }
 
+      // Crop breakdown — group total liters by cropType
+      const cropMap: Record<string, number> = {};
+      for (const e of recent) {
+        const crop = cropByDevice[e.deviceId] ?? 'Otro';
+        cropMap[crop] = (cropMap[crop] ?? 0) + e.litersConsumed;
+      }
+      const cropBreakdown = Object.entries(cropMap)
+        .map(([crop, liters]) => ({ crop, liters: parseFloat(liters.toFixed(1)) }))
+        .sort((a, b) => b.liters - a.liters);
+
       res.json({
         kpis: {
           totalLiters: parseFloat(totalLiters.toFixed(1)),
@@ -141,6 +159,7 @@ export const createIrrigationRouter = (services: AppServices) => {
         },
         daily: { labels: dailyLabels, values: dailyValues },
         cumulative,
+        cropBreakdown,
       });
     }),
   );
