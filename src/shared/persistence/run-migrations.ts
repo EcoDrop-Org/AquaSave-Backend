@@ -94,4 +94,9 @@ export const runMigrations = async (sql: PgClient): Promise<void> => {
     ALTER TABLE users
       ADD COLUMN IF NOT EXISTS avatar_url TEXT
   `;
+
+  await sql`
+    ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS phone TEXT
+  `;
 };

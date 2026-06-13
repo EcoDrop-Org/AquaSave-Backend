@@ -14,6 +14,7 @@ export type User = {
   passwordHash: string;
   profile: UserProfile;
   avatarUrl?: string;
+  phone?: string;
   isActive: boolean;
   createdAt: string;
   lastLoginAt?: string;
