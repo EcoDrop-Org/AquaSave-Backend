@@ -13,6 +13,7 @@ export type User = {
   email: string;
   passwordHash: string;
   profile: UserProfile;
+  avatarUrl?: string;
   isActive: boolean;
   createdAt: string;
   lastLoginAt?: string;

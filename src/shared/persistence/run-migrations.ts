@@ -89,4 +89,9 @@ export const runMigrations = async (sql: PgClient): Promise<void> => {
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `;
+
+  await sql`
+    ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS avatar_url TEXT
+  `;
 };

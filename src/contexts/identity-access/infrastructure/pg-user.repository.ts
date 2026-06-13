@@ -13,6 +13,7 @@ type UserRow = {
   space_type: string | null;
   crop_types: string[];
   location_city: string | null;
+  avatar_url: string | null;
   is_active: boolean;
   created_at: Date;
   last_login_at: Date | null;
@@ -29,6 +30,7 @@ const rowToUser = (row: UserRow): User => ({
     cropTypes: row.crop_types,
     locationCity: row.location_city ?? undefined,
   },
+  avatarUrl: row.avatar_url ?? undefined,
   isActive: row.is_active,
   createdAt: row.created_at.toISOString(),
   lastLoginAt: row.last_login_at?.toISOString(),
@@ -90,13 +92,14 @@ export class PgUserRepository implements UserRepository {
 
   async updateProfile(
     userId: string,
-    fields: { fullName?: string; locationCity?: string },
+    fields: { fullName?: string; locationCity?: string; avatarUrl?: string },
   ): Promise<User> {
     const rows = await this.sql<UserRow[]>`
       UPDATE users
       SET
         full_name     = COALESCE(${fields.fullName ?? null}, full_name),
-        location_city = COALESCE(${fields.locationCity ?? null}, location_city)
+        location_city = COALESCE(${fields.locationCity ?? null}, location_city),
+        avatar_url    = COALESCE(${fields.avatarUrl ?? null}, avatar_url)
       WHERE id = ${userId}
       RETURNING *
     `;

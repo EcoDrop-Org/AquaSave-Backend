@@ -29,6 +29,7 @@ const loginSchema = z.object({
 const updateProfileSchema = z.object({
   fullName: z.string().min(2).optional(),
   locationCity: z.string().min(2).optional(),
+  avatarUrl: z.string().optional(),
 });
 
 const changePasswordSchema = z.object({

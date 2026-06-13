@@ -56,7 +56,7 @@ export class FileUserRepository implements UserRepository {
     return updated;
   }
 
-  async updateProfile(userId: string, fields: { fullName?: string; locationCity?: string }): Promise<User> {
+  async updateProfile(userId: string, fields: { fullName?: string; locationCity?: string; avatarUrl?: string }): Promise<User> {
     const data = await this.store.read();
     const index = data.users.findIndex((u) => u.id === userId);
     if (index < 0) throw notFound('User not found');
@@ -69,6 +69,7 @@ export class FileUserRepository implements UserRepository {
         fullName: fields.fullName ?? current.profile.fullName,
         locationCity: fields.locationCity ?? current.profile.locationCity,
       },
+      avatarUrl: fields.avatarUrl ?? current.avatarUrl,
     };
     data.users[index] = updated;
     await this.store.write(data);
