@@ -59,6 +59,7 @@ export const buildServices = (env: AppEnv, sql: PgClient) => {
         jwtService,
       ),
       userRepository,
+      passwordHasher,
     },
     deviceManagement: {
       pairDevice: new PairDeviceService(deviceRepository),

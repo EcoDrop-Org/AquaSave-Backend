@@ -158,4 +158,21 @@ export class PgDeviceRepository implements DeviceRepository {
     if (!row) throw notFound('Device not found');
     return rowToDevice(row);
   }
+
+  async getSettings(deviceId: string): Promise<Record<string, unknown>> {
+    const rows = await this.sql<{ settings: Record<string, unknown> }[]>`
+      SELECT settings FROM device_settings WHERE device_id = ${deviceId}
+    `;
+    return rows[0]?.settings ?? {};
+  }
+
+  async putSettings(deviceId: string, settings: Record<string, unknown>): Promise<Record<string, unknown>> {
+    await this.sql`
+      INSERT INTO device_settings (device_id, settings, updated_at)
+      VALUES (${deviceId}, ${this.sql.json(settings)}, NOW())
+      ON CONFLICT (device_id)
+      DO UPDATE SET settings = ${this.sql.json(settings)}, updated_at = NOW()
+    `;
+    return settings;
+  }
 }

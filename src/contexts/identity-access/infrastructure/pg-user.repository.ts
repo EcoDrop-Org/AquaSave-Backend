@@ -87,4 +87,31 @@ export class PgUserRepository implements UserRepository {
     if (!row) throw notFound('User not found');
     return rowToUser(row);
   }
+
+  async updateProfile(
+    userId: string,
+    fields: { fullName?: string; locationCity?: string },
+  ): Promise<User> {
+    const rows = await this.sql<UserRow[]>`
+      UPDATE users
+      SET
+        full_name     = COALESCE(${fields.fullName ?? null}, full_name),
+        location_city = COALESCE(${fields.locationCity ?? null}, location_city)
+      WHERE id = ${userId}
+      RETURNING *
+    `;
+    const row = rows[0];
+    if (!row) throw notFound('User not found');
+    return rowToUser(row);
+  }
+
+  async updatePassword(userId: string, newHash: string): Promise<void> {
+    const rows = await this.sql<{ id: string }[]>`
+      UPDATE users
+      SET password_hash = ${newHash}
+      WHERE id = ${userId}
+      RETURNING id
+    `;
+    if (!rows[0]) throw notFound('User not found');
+  }
 }

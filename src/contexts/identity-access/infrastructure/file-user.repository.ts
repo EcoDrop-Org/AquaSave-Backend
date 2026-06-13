@@ -55,4 +55,33 @@ export class FileUserRepository implements UserRepository {
     await this.store.write(data);
     return updated;
   }
+
+  async updateProfile(userId: string, fields: { fullName?: string; locationCity?: string }): Promise<User> {
+    const data = await this.store.read();
+    const index = data.users.findIndex((u) => u.id === userId);
+    if (index < 0) throw notFound('User not found');
+    const current = data.users[index];
+    if (!current) throw notFound('User not found');
+    const updated: User = {
+      ...current,
+      profile: {
+        ...current.profile,
+        fullName: fields.fullName ?? current.profile.fullName,
+        locationCity: fields.locationCity ?? current.profile.locationCity,
+      },
+    };
+    data.users[index] = updated;
+    await this.store.write(data);
+    return updated;
+  }
+
+  async updatePassword(userId: string, newHash: string): Promise<void> {
+    const data = await this.store.read();
+    const index = data.users.findIndex((u) => u.id === userId);
+    if (index < 0) throw notFound('User not found');
+    const current = data.users[index];
+    if (!current) throw notFound('User not found');
+    data.users[index] = { ...current, passwordHash: newHash };
+    await this.store.write(data);
+  }
 }

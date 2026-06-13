@@ -26,6 +26,16 @@ const loginSchema = z.object({
   password: z.string().min(1),
 });
 
+const updateProfileSchema = z.object({
+  fullName: z.string().min(2).optional(),
+  locationCity: z.string().min(2).optional(),
+});
+
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(8),
+});
+
 export const createAuthRouter = (services: AppServices) => {
   const router = Router();
 
@@ -62,6 +72,50 @@ export const createAuthRouter = (services: AppServices) => {
     asyncHandler(async (req, res) => {
       const auth = requireAuth(req);
       res.json({ user: auth.user });
+    }),
+  );
+
+  router.patch(
+    '/me',
+    authMiddleware(services),
+    asyncHandler(async (req, res) => {
+      const auth = requireAuth(req);
+      const input = updateProfileSchema.parse(req.body);
+      const updated = await services.identityAccess.userRepository.updateProfile(
+        auth.user.id,
+        input,
+      );
+      const { passwordHash: _, ...publicUser } = updated;
+      res.json({ user: publicUser });
+    }),
+  );
+
+  router.post(
+    '/change-password',
+    authMiddleware(services),
+    asyncHandler(async (req, res) => {
+      const auth = requireAuth(req);
+      const { currentPassword, newPassword } = changePasswordSchema.parse(req.body);
+
+      const user = await services.identityAccess.userRepository.findById(auth.user.id);
+      if (!user) {
+        res.status(404).json({ message: 'Usuario no encontrado' });
+        return;
+      }
+
+      const valid = await services.identityAccess.passwordHasher.verify(
+        currentPassword,
+        user.passwordHash,
+      );
+      if (!valid) {
+        res.status(401).json({ message: 'La contraseña actual es incorrecta' });
+        return;
+      }
+
+      const newHash = await services.identityAccess.passwordHasher.hash(newPassword);
+      await services.identityAccess.userRepository.updatePassword(auth.user.id, newHash);
+
+      res.status(204).send();
     }),
   );
 

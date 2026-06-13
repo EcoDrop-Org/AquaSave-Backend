@@ -81,6 +81,14 @@ export class FileDeviceRepository implements DeviceRepository {
     }));
   }
 
+  async getSettings(_deviceId: string): Promise<Record<string, unknown>> {
+    return {};
+  }
+
+  async putSettings(_deviceId: string, settings: Record<string, unknown>): Promise<Record<string, unknown>> {
+    return settings;
+  }
+
   private async mutate(
     deviceId: string,
     updateFn: (device: Device) => Device,

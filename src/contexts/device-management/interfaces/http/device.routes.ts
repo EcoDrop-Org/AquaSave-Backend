@@ -8,6 +8,7 @@ import {
   requireAuth,
 } from '../../../../shared/http/auth.middleware.js';
 import { param } from '../../../../shared/http/params.js';
+import { notFound } from '../../../../shared/http/http-error.js';
 
 const locationSchema = z.object({
   label: z.string().min(3),
@@ -94,6 +95,44 @@ export const createDeviceRouter = (services: AppServices) => {
         accountId,
       );
       res.status(204).send();
+    }),
+  );
+
+  const deviceSettingsSchema = z.object({
+    minMoisture: z.number().min(0).max(100).optional(),
+    optimalMoisture: z.number().min(0).max(100).optional(),
+    maxMoisture: z.number().min(0).max(100).optional(),
+    hotAlertC: z.number().min(-20).max(60).optional(),
+    coldAlertC: z.number().min(-20).max(60).optional(),
+    rainPausePct: z.number().min(0).max(100).optional(),
+    schedules: z.array(z.object({
+      timeText: z.string(),
+      enabled: z.boolean(),
+    })).optional(),
+  });
+
+  router.get(
+    '/:deviceId/settings',
+    asyncHandler(async (req, res) => {
+      const { accountId } = requireAuth(req);
+      const deviceId = param(req.params, 'deviceId');
+      const device = await services.deviceManagement.repository.findById(deviceId);
+      if (!device || device.accountId !== accountId) throw notFound('Device not found');
+      const settings = await services.deviceManagement.repository.getSettings(deviceId);
+      res.json({ settings });
+    }),
+  );
+
+  router.put(
+    '/:deviceId/settings',
+    asyncHandler(async (req, res) => {
+      const { accountId } = requireAuth(req);
+      const deviceId = param(req.params, 'deviceId');
+      const device = await services.deviceManagement.repository.findById(deviceId);
+      if (!device || device.accountId !== accountId) throw notFound('Device not found');
+      const input = deviceSettingsSchema.parse(req.body);
+      const settings = await services.deviceManagement.repository.putSettings(deviceId, input as Record<string, unknown>);
+      res.json({ settings });
     }),
   );
 

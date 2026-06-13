@@ -81,4 +81,12 @@ export const runMigrations = async (sql: PgClient): Promise<void> => {
   `;
 
   await sql`CREATE INDEX IF NOT EXISTS edge_commands_device_id_status_idx ON edge_commands (device_id, status)`;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS device_settings (
+      device_id  TEXT PRIMARY KEY REFERENCES devices(id) ON DELETE CASCADE,
+      settings   JSONB NOT NULL DEFAULT '{}',
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
 };
