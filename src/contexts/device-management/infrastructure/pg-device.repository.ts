@@ -167,11 +167,13 @@ export class PgDeviceRepository implements DeviceRepository {
   }
 
   async putSettings(deviceId: string, settings: Record<string, unknown>): Promise<Record<string, unknown>> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const jsonValue = settings as any;
     await this.sql`
       INSERT INTO device_settings (device_id, settings, updated_at)
-      VALUES (${deviceId}, ${this.sql.json(settings)}, NOW())
+      VALUES (${deviceId}, ${this.sql.json(jsonValue)}, NOW())
       ON CONFLICT (device_id)
-      DO UPDATE SET settings = ${this.sql.json(settings)}, updated_at = NOW()
+      DO UPDATE SET settings = ${this.sql.json(jsonValue)}, updated_at = NOW()
     `;
     return settings;
   }
