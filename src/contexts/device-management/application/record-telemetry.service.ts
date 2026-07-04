@@ -7,7 +7,11 @@ import type { Device } from '../domain/device.js';
 export type RecordTelemetryInput = {
   deviceId: string;
   soilMoisturePct: number;
-  temperatureC: number;
+  // Opcional: si el DHT del dispositivo no responde, se reutiliza la ultima
+  // temperatura conocida.
+  temperatureC?: number;
+  humidityPct?: number;
+  pumpOn?: boolean;
   flowRateLMin?: number;
   batteryPct?: number;
   recordedAt?: string;
@@ -25,7 +29,10 @@ export class RecordTelemetryService {
     const reading: SensorReading = normalizeReading({
       deviceId: input.deviceId,
       soilMoisturePct: input.soilMoisturePct,
-      temperatureC: input.temperatureC,
+      temperatureC:
+        input.temperatureC ?? device.lastTelemetry?.temperatureC ?? 0,
+      humidityPct: input.humidityPct ?? device.lastTelemetry?.humidityPct,
+      pumpOn: input.pumpOn,
       flowRateLMin: input.flowRateLMin,
       batteryPct: input.batteryPct,
       recordedAt: input.recordedAt ?? new Date().toISOString(),

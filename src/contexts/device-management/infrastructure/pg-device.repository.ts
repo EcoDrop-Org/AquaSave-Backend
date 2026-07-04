@@ -166,6 +166,13 @@ export class PgDeviceRepository implements DeviceRepository {
     return rows[0]?.settings ?? {};
   }
 
+  async getAllSettings(): Promise<Array<{ deviceId: string; settings: Record<string, unknown> }>> {
+    const rows = await this.sql<{ device_id: string; settings: Record<string, unknown> }[]>`
+      SELECT device_id, settings FROM device_settings
+    `;
+    return rows.map((row) => ({ deviceId: row.device_id, settings: row.settings }));
+  }
+
   async putSettings(deviceId: string, settings: Record<string, unknown>): Promise<Record<string, unknown>> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const jsonValue = settings as any;

@@ -146,10 +146,12 @@ export const openApiDocument = {
       },
       SensorReading: {
         type: 'object',
-        required: ['soilMoisturePct', 'temperatureC'],
+        required: ['soilMoisturePct'],
         properties: {
           soilMoisturePct: { type: 'number', minimum: 0, maximum: 100 },
           temperatureC: { type: 'number' },
+          humidityPct: { type: 'number', minimum: 0, maximum: 100 },
+          pumpOn: { type: 'boolean' },
           flowRateLMin: { type: 'number', minimum: 0 },
           batteryPct: { type: 'number', minimum: 0, maximum: 100 },
           recordedAt: { type: 'string', format: 'date-time' },

@@ -75,6 +75,15 @@ export class PgIrrigationEventRepository implements IrrigationEventRepository {
     return row ? rowToEvent(row) : undefined;
   }
 
+  async findAllRunning(): Promise<IrrigationEvent[]> {
+    const rows = await this.sql<IrrigationEventRow[]>`
+      SELECT * FROM irrigation_events
+      WHERE status = 'running'
+      ORDER BY started_at ASC
+    `;
+    return rows.map(rowToEvent);
+  }
+
   async completeRunningEvent(
     deviceId: string,
     endedAt: string,

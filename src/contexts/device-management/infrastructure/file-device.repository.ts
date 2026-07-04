@@ -12,13 +12,22 @@ type DeviceFile = {
   devices: Device[];
 };
 
+type SettingsFile = {
+  settings: Record<string, Record<string, unknown>>;
+};
+
 export class FileDeviceRepository implements DeviceRepository {
   private readonly store: JsonStore<DeviceFile>;
+  private readonly settingsStore: JsonStore<SettingsFile>;
 
   constructor(dataDir: string) {
     this.store = new JsonStore<DeviceFile>(join(dataDir, 'devices.json'), {
       devices: [],
     });
+    this.settingsStore = new JsonStore<SettingsFile>(
+      join(dataDir, 'device-settings.json'),
+      { settings: {} },
+    );
   }
 
   async findById(deviceId: string): Promise<Device | undefined> {
@@ -81,12 +90,24 @@ export class FileDeviceRepository implements DeviceRepository {
     }));
   }
 
-  async getSettings(_deviceId: string): Promise<Record<string, unknown>> {
-    return {};
+  async getSettings(deviceId: string): Promise<Record<string, unknown>> {
+    const data = await this.settingsStore.read();
+    return data.settings[deviceId] ?? {};
   }
 
-  async putSettings(_deviceId: string, settings: Record<string, unknown>): Promise<Record<string, unknown>> {
+  async putSettings(deviceId: string, settings: Record<string, unknown>): Promise<Record<string, unknown>> {
+    const data = await this.settingsStore.read();
+    data.settings[deviceId] = settings;
+    await this.settingsStore.write(data);
     return settings;
+  }
+
+  async getAllSettings(): Promise<Array<{ deviceId: string; settings: Record<string, unknown> }>> {
+    const data = await this.settingsStore.read();
+    return Object.entries(data.settings).map(([deviceId, settings]) => ({
+      deviceId,
+      settings,
+    }));
   }
 
   private async mutate(

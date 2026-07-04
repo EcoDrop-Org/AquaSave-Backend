@@ -17,4 +17,6 @@ export interface DeviceRepository {
   updateValveState(deviceId: string, valveState: ValveState): Promise<Device>;
   getSettings(deviceId: string): Promise<Record<string, unknown>>;
   putSettings(deviceId: string, settings: Record<string, unknown>): Promise<Record<string, unknown>>;
+  /** Configuraciones de todos los dispositivos (para el scheduler de riego). */
+  getAllSettings(): Promise<Array<{ deviceId: string; settings: Record<string, unknown> }>>;
 }

@@ -21,8 +21,13 @@ describe('IAM protected resources', () => {
       nodeEnv: 'test',
       allowedOrigins: ['*'],
       dataDir,
+      databaseUrl: '',
+      jwtSecret: 'test-secret',
       weatherProvider: 'open-meteo',
+      scheduleTimezone: 'America/Lima',
+      scheduledRunMinutes: 5,
     };
+    // Sin cliente Postgres: usa los repositorios de archivos en dataDir.
     const app = createApp(env, buildServices(env));
 
     await new Promise<void>((resolve) => {

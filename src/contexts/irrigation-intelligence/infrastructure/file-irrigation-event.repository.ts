@@ -43,6 +43,11 @@ export class FileIrrigationEventRepository
     );
   }
 
+  async findAllRunning(): Promise<IrrigationEvent[]> {
+    const data = await this.store.read();
+    return data.events.filter((event) => event.status === 'running');
+  }
+
   async completeRunningEvent(
     deviceId: string,
     endedAt: string,

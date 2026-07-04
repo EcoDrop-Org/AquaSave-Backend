@@ -9,7 +9,10 @@ import { param } from '../../../../shared/http/params.js';
 
 const telemetrySchema = z.object({
   soilMoisturePct: z.number().min(0).max(100),
-  temperatureC: z.number().min(-20).max(80),
+  // Opcional: el firmware la omite si el DHT no responde.
+  temperatureC: z.number().min(-20).max(80).optional(),
+  humidityPct: z.number().min(0).max(100).optional(),
+  pumpOn: z.boolean().optional(),
   flowRateLMin: z.number().min(0).max(100).optional(),
   batteryPct: z.number().min(0).max(100).optional(),
   recordedAt: z.string().datetime().optional(),
@@ -36,6 +39,13 @@ export const createEdgeDeviceRouter = (
       const device = await services.deviceManagement.recordTelemetry.execute({
         deviceId,
         ...payload,
+      });
+      // Mantiene el historial de riego coherente con la bomba real
+      // (el dispositivo tambien riega solo en modo automatico).
+      await services.irrigationIntelligence.syncPumpState.execute({
+        deviceId,
+        pumpOn: payload.pumpOn,
+        flowRateLMin: payload.flowRateLMin,
       });
       res.status(202).json({ device });
     }),

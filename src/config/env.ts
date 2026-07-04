@@ -11,6 +11,10 @@ export type AppEnv = {
   jwtSecret: string;
   edgeApiKey?: string;
   weatherProvider: 'open-meteo';
+  /** Zona horaria para evaluar los horarios de riego programado (HH:MM). */
+  scheduleTimezone: string;
+  /** Duracion maxima (min) de un riego iniciado por horario programado. */
+  scheduledRunMinutes: number;
 };
 
 const required = (name: string): string => {
@@ -42,4 +46,6 @@ export const env: AppEnv = {
   jwtSecret: required('JWT_SECRET'),
   edgeApiKey: optional(process.env.EDGE_API_KEY),
   weatherProvider: 'open-meteo',
+  scheduleTimezone: process.env.SCHEDULE_TIMEZONE ?? 'America/Lima',
+  scheduledRunMinutes: Number(process.env.SCHEDULED_RUN_MINUTES ?? 5),
 };

@@ -12,6 +12,14 @@ console.log('Database migrations applied');
 const services = buildServices(env, sql);
 const app = createApp(env, services);
 
+// Scheduler de riego programado: revisa cada 20 s los horarios configurados
+// en la app (device_settings.schedules) y encola comandos para el EdgeAPI.
+setInterval(() => {
+  services.irrigationIntelligence.scheduledIrrigation
+    .tick()
+    .catch((err) => console.error('[Scheduler] tick fallo:', err));
+}, 20_000);
+
 app.listen(env.port, () => {
   console.log(`AquaSave API listening on http://localhost:${env.port}`);
 });

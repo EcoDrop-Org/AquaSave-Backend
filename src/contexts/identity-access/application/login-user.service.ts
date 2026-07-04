@@ -1,4 +1,7 @@
+import { randomUUID } from 'node:crypto';
+
 import { unauthorized } from '../../../shared/http/http-error.js';
+import type { SessionRepository } from '../domain/repositories/session-repository.js';
 import type { UserRepository } from '../domain/repositories/user-repository.js';
 import { JwtService } from '../domain/services/jwt-service.js';
 import { PasswordHasher } from '../domain/services/password-hasher.js';
@@ -20,6 +23,7 @@ export class LoginUserService {
     private readonly users: UserRepository,
     private readonly jwtService: JwtService,
     private readonly passwordHasher: PasswordHasher,
+    private readonly sessions: SessionRepository,
   ) {}
 
   async execute(input: LoginUserInput): Promise<LoginResult> {
@@ -43,6 +47,15 @@ export class LoginUserService {
     );
 
     const { token, expiresAt } = this.jwtService.sign(user.id);
+
+    // Registrar la sesion para poder revocarla en el logout.
+    await this.sessions.save({
+      id: randomUUID(),
+      token,
+      userId: user.id,
+      createdAt: new Date().toISOString(),
+      expiresAt,
+    });
 
     return {
       user: toPublicUser(updatedUser),
