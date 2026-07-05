@@ -39,6 +39,9 @@ export class StartIrrigationService {
       status: 'running',
       wasSkipped: false,
       commandId: command.id,
+      // Snapshot de las condiciones al iniciar (para el historial).
+      soilMoisturePct: device.lastTelemetry?.soilMoisturePct,
+      temperatureC: device.lastTelemetry?.temperatureC,
     };
 
     return this.events.save(event);

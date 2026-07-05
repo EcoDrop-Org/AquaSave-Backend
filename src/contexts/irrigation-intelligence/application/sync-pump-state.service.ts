@@ -60,6 +60,9 @@ export class SyncPumpStateService {
           triggerType: 'automatic',
           status: 'running',
           wasSkipped: false,
+          // Snapshot de las condiciones al iniciar (para el historial).
+          soilMoisturePct: device.lastTelemetry?.soilMoisturePct,
+          temperatureC: device.lastTelemetry?.temperatureC,
         };
         await this.events.save(event);
       }
