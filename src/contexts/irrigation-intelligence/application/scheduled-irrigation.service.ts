@@ -86,6 +86,12 @@ export class ScheduledIrrigationService {
           );
           continue;
         }
+        if (!device.isActive) {
+          console.warn(
+            `[Scheduler] Horario omitido: dispositivo en pausa (${deviceId})`,
+          );
+          continue;
+        }
 
         const running = await this.events.findRunningByDeviceId(deviceId);
         if (running) {

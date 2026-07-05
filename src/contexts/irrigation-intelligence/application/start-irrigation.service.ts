@@ -21,6 +21,9 @@ export class StartIrrigationService {
     if (device.status !== 'online') {
       throw badRequest('Device is not online');
     }
+    if (!device.isActive) {
+      throw badRequest('El dispositivo está en pausa; reactívalo para regar');
+    }
 
     const running = await this.events.findRunningByDeviceId(deviceId);
     if (running) {

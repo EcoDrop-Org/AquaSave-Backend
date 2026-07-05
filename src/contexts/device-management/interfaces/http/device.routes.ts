@@ -98,6 +98,35 @@ export const createDeviceRouter = (services: AppServices) => {
     }),
   );
 
+  // Pausa remota: apaga la bomba y bloquea el riego (auto y manual) en el
+  // dispositivo hasta reanudarlo. El comando viaja via edge (MQTT) y el
+  // estado queda reflejado en device.isActive.
+  router.post(
+    '/:deviceId/pause',
+    asyncHandler(async (req, res) => {
+      const { accountId } = requireAuth(req);
+      const deviceId = param(req.params, 'deviceId');
+      const existing = await services.deviceManagement.repository.findById(deviceId);
+      if (!existing || existing.accountId !== accountId) throw notFound('Device not found');
+      await services.irrigationIntelligence.edgeGateway.queuePauseDevice(deviceId);
+      const device = await services.deviceManagement.repository.updateIsActive(deviceId, false);
+      res.json({ device });
+    }),
+  );
+
+  router.post(
+    '/:deviceId/resume',
+    asyncHandler(async (req, res) => {
+      const { accountId } = requireAuth(req);
+      const deviceId = param(req.params, 'deviceId');
+      const existing = await services.deviceManagement.repository.findById(deviceId);
+      if (!existing || existing.accountId !== accountId) throw notFound('Device not found');
+      await services.irrigationIntelligence.edgeGateway.queueResumeDevice(deviceId);
+      const device = await services.deviceManagement.repository.updateIsActive(deviceId, true);
+      res.json({ device });
+    }),
+  );
+
   const deviceSettingsSchema = z.object({
     minMoisture: z.number().min(0).max(100).optional(),
     optimalMoisture: z.number().min(0).max(100).optional(),

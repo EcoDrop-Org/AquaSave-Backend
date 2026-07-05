@@ -15,6 +15,7 @@ export interface DeviceRepository {
   ): Promise<Device>;
   recordTelemetry(deviceId: string, reading: SensorReading): Promise<Device>;
   updateValveState(deviceId: string, valveState: ValveState): Promise<Device>;
+  updateIsActive(deviceId: string, isActive: boolean): Promise<Device>;
   getSettings(deviceId: string): Promise<Record<string, unknown>>;
   putSettings(deviceId: string, settings: Record<string, unknown>): Promise<Record<string, unknown>>;
   /** Configuraciones de todos los dispositivos (para el scheduler de riego). */
