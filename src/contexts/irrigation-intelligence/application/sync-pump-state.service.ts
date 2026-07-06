@@ -15,7 +15,7 @@ export type SyncPumpStateInput = {
 
 // No cerrar/abrir eventos creados hace menos de este margen: da tiempo a que
 // un comando recien encolado (start/stop desde la app) llegue al dispositivo.
-const COMMAND_GRACE_MS = 30_000;
+const COMMAND_GRACE_MS = 15_000;
 
 /**
  * Mantiene coherentes los eventos de riego con lo que la bomba hace
