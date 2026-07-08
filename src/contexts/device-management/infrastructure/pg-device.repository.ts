@@ -1,6 +1,7 @@
 import { notFound } from '../../../shared/http/http-error.js';
 import type { PgClient } from '../../../shared/persistence/pg-client.js';
 import type { Device, ValveState } from '../domain/device.js';
+import { withEffectiveStatus } from '../domain/device.js';
 import type { DeviceStatus } from '../domain/device-status.js';
 import type { DeviceRepository } from '../domain/repositories/device-repository.js';
 import type { SensorReading } from '../domain/sensor-reading.js';
@@ -23,25 +24,28 @@ type DeviceRow = {
   updated_at: Date;
 };
 
-const rowToDevice = (row: DeviceRow): Device => ({
-  id: row.id,
-  accountId: row.account_id,
-  name: row.name,
-  location: {
-    label: row.location_label,
-    latitude: row.location_latitude ?? undefined,
-    longitude: row.location_longitude ?? undefined,
-  },
-  status: row.status as DeviceStatus,
-  firmwareVersion: row.firmware_version ?? undefined,
-  isActive: row.is_active,
-  plantCount: row.plant_count,
-  cropType: row.crop_type ?? undefined,
-  valveState: row.valve_state as ValveState,
-  lastTelemetry: row.last_telemetry ?? undefined,
-  createdAt: row.created_at.toISOString(),
-  updatedAt: row.updated_at.toISOString(),
-});
+// Toda lectura pasa por withEffectiveStatus: 'online' solo con telemetria
+// reciente del ESP32 (si esta apagado, la app lo ve "Sin conexion").
+const rowToDevice = (row: DeviceRow): Device =>
+  withEffectiveStatus({
+    id: row.id,
+    accountId: row.account_id,
+    name: row.name,
+    location: {
+      label: row.location_label,
+      latitude: row.location_latitude ?? undefined,
+      longitude: row.location_longitude ?? undefined,
+    },
+    status: row.status as DeviceStatus,
+    firmwareVersion: row.firmware_version ?? undefined,
+    isActive: row.is_active,
+    plantCount: row.plant_count,
+    cropType: row.crop_type ?? undefined,
+    valveState: row.valve_state as ValveState,
+    lastTelemetry: row.last_telemetry ?? undefined,
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+  });
 
 export class PgDeviceRepository implements DeviceRepository {
   constructor(private readonly sql: PgClient) {}
