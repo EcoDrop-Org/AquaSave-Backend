@@ -9,8 +9,42 @@ type ResolvedLocation = {
   longitude: number;
 };
 
+// Open-Meteo a veces tarda o no responde; sin timeout la peticion quedaba
+// colgada y el clima "a veces salia y a veces no".
+const FETCH_TIMEOUT_MS = 8_000;
+
 export class OpenMeteoWeatherService implements WeatherIntegrationService {
+  // Cache en memoria por dispositivo. Open-Meteo tiene limite diario de
+  // peticiones (que este proyecto ya agoto alguna vez: "Daily API request
+  // limit exceeded"); reutilizar el pronostico mientras siga vigente
+  // (validUntil) reduce las llamadas a una cada 30 min por dispositivo.
+  private readonly cache = new Map<string, WeatherForecast>();
+
   async getForecastForDevice(device: Device): Promise<WeatherForecast> {
+    const cached = this.cache.get(device.id);
+    if (cached && Date.parse(cached.validUntil) > Date.now()) {
+      return cached;
+    }
+
+    try {
+      const forecast = await this.fetchLiveForecast(device);
+      this.cache.set(device.id, forecast);
+      return forecast;
+    } catch (err) {
+      // La API externa fallo (timeout, cuota diaria, geocoding, red):
+      // responder un pronostico por defecto (20 C) en lugar de romper la
+      // pantalla. Tambien se cachea (5 min) para no insistir al proveedor.
+      console.warn(
+        `[Weather] Proveedor externo fallo (${device.id}):`,
+        err instanceof Error ? err.message : err,
+      );
+      const fallback = fallbackForecast(device);
+      this.cache.set(device.id, fallback);
+      return fallback;
+    }
+  }
+
+  private async fetchLiveForecast(device: Device): Promise<WeatherForecast> {
     const location =
       device.location.latitude !== undefined &&
       device.location.longitude !== undefined
@@ -39,7 +73,9 @@ export class OpenMeteoWeatherService implements WeatherIntegrationService {
     url.searchParams.set('forecast_days', '1');
     url.searchParams.set('timezone', 'auto');
 
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    });
     const body = (await response.json()) as Record<string, unknown>;
     if (!response.ok) {
       throw badRequest(String(body.reason ?? 'Weather provider error'));
@@ -58,7 +94,9 @@ export class OpenMeteoWeatherService implements WeatherIntegrationService {
       url.searchParams.set('language', 'es');
       url.searchParams.set('countryCode', 'PE');
 
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      });
       const body = (await response.json()) as {
         results?: Array<Record<string, unknown>>;
         reason?: string;
@@ -81,6 +119,25 @@ export class OpenMeteoWeatherService implements WeatherIntegrationService {
     throw badRequest('Could not resolve device location');
   }
 }
+
+// Pronostico por defecto cuando la API externa no responde: 20 C y valores
+// neutros. `validUntil` corto para que la app reintente pronto y recupere el
+// clima real en cuanto el proveedor vuelva.
+const fallbackForecast = (device: Device): WeatherForecast => ({
+  deviceId: device.id,
+  locationName: device.location.label,
+  latitude: device.location.latitude ?? 0,
+  longitude: device.location.longitude ?? 0,
+  temperatureC: 20,
+  apparentTemperatureC: 20,
+  humidityPct: 60,
+  rainProbabilityPct: 0,
+  precipitationMm: 0,
+  windSpeedKmh: 0,
+  conditionLabel: 'Clima estimado',
+  retrievedAt: new Date().toISOString(),
+  validUntil: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+});
 
 const toForecast = (
   deviceId: string,
