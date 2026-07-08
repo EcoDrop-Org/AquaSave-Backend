@@ -21,6 +21,9 @@ export class StartIrrigationService {
     if (device.status !== 'online') {
       throw badRequest('Device is not online');
     }
+    if (!device.isActive) {
+      throw badRequest('El dispositivo está en pausa; reactívalo para regar');
+    }
 
     const running = await this.events.findRunningByDeviceId(deviceId);
     if (running) {
@@ -39,6 +42,9 @@ export class StartIrrigationService {
       status: 'running',
       wasSkipped: false,
       commandId: command.id,
+      // Snapshot de las condiciones al iniciar (para el historial).
+      soilMoisturePct: device.lastTelemetry?.soilMoisturePct,
+      temperatureC: device.lastTelemetry?.temperatureC,
     };
 
     return this.events.save(event);

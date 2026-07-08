@@ -15,7 +15,7 @@ export type SyncPumpStateInput = {
 
 // No cerrar/abrir eventos creados hace menos de este margen: da tiempo a que
 // un comando recien encolado (start/stop desde la app) llegue al dispositivo.
-const COMMAND_GRACE_MS = 30_000;
+const COMMAND_GRACE_MS = 15_000;
 
 /**
  * Mantiene coherentes los eventos de riego con lo que la bomba hace
@@ -60,6 +60,9 @@ export class SyncPumpStateService {
           triggerType: 'automatic',
           status: 'running',
           wasSkipped: false,
+          // Snapshot de las condiciones al iniciar (para el historial).
+          soilMoisturePct: device.lastTelemetry?.soilMoisturePct,
+          temperatureC: device.lastTelemetry?.temperatureC,
         };
         await this.events.save(event);
       }

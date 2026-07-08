@@ -31,6 +31,14 @@ export class FileEdgeDeviceGateway implements EdgeDeviceGateway {
     return this.queue(deviceId, 'close-valve');
   }
 
+  queuePauseDevice(deviceId: string): Promise<EdgeCommand> {
+    return this.queue(deviceId, 'pause-device');
+  }
+
+  queueResumeDevice(deviceId: string): Promise<EdgeCommand> {
+    return this.queue(deviceId, 'resume-device');
+  }
+
   async getPendingCommands(deviceId: string): Promise<EdgeCommand[]> {
     const data = await this.store.read();
     return data.commands.filter(

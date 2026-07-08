@@ -17,6 +17,8 @@ type IrrigationEventRow = {
   was_skipped: boolean;
   skip_reason: string | null;
   command_id: string | null;
+  soil_moisture_pct: number | null;
+  temperature_c: number | null;
 };
 
 const rowToEvent = (row: IrrigationEventRow): IrrigationEvent => ({
@@ -30,6 +32,8 @@ const rowToEvent = (row: IrrigationEventRow): IrrigationEvent => ({
   wasSkipped: row.was_skipped,
   skipReason: row.skip_reason ?? undefined,
   commandId: row.command_id ?? undefined,
+  soilMoisturePct: row.soil_moisture_pct ?? undefined,
+  temperatureC: row.temperature_c ?? undefined,
 });
 
 export class PgIrrigationEventRepository implements IrrigationEventRepository {
@@ -39,7 +43,8 @@ export class PgIrrigationEventRepository implements IrrigationEventRepository {
     await this.sql`
       INSERT INTO irrigation_events (
         id, device_id, started_at, ended_at, liters_consumed,
-        trigger_type, status, was_skipped, skip_reason, command_id
+        trigger_type, status, was_skipped, skip_reason, command_id,
+        soil_moisture_pct, temperature_c
       ) VALUES (
         ${event.id},
         ${event.deviceId},
@@ -50,7 +55,9 @@ export class PgIrrigationEventRepository implements IrrigationEventRepository {
         ${event.status},
         ${event.wasSkipped},
         ${event.skipReason ?? null},
-        ${event.commandId ?? null}
+        ${event.commandId ?? null},
+        ${event.soilMoisturePct ?? null},
+        ${event.temperatureC ?? null}
       )
     `;
     return event;

@@ -90,6 +90,14 @@ export class FileDeviceRepository implements DeviceRepository {
     }));
   }
 
+  async updateIsActive(deviceId: string, isActive: boolean): Promise<Device> {
+    return this.mutate(deviceId, (device) => ({
+      ...device,
+      isActive,
+      updatedAt: new Date().toISOString(),
+    }));
+  }
+
   async getSettings(deviceId: string): Promise<Record<string, unknown>> {
     const data = await this.settingsStore.read();
     return data.settings[deviceId] ?? {};

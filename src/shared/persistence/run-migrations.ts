@@ -99,4 +99,15 @@ export const runMigrations = async (sql: PgClient): Promise<void> => {
     ALTER TABLE users
       ADD COLUMN IF NOT EXISTS phone TEXT
   `;
+
+  // Snapshot de condiciones al iniciar el riego (historial de la app).
+  await sql`
+    ALTER TABLE irrigation_events
+      ADD COLUMN IF NOT EXISTS soil_moisture_pct DOUBLE PRECISION
+  `;
+
+  await sql`
+    ALTER TABLE irrigation_events
+      ADD COLUMN IF NOT EXISTS temperature_c DOUBLE PRECISION
+  `;
 };

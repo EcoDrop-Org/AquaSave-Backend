@@ -12,4 +12,8 @@ export type IrrigationEvent = {
   wasSkipped: boolean;
   skipReason?: string;
   commandId?: string;
+  // Snapshot de la telemetria del dispositivo al momento de iniciar el riego.
+  // Ausente en eventos antiguos (anteriores a este campo).
+  soilMoisturePct?: number;
+  temperatureC?: number;
 };

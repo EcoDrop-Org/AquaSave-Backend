@@ -23,7 +23,11 @@ type ScheduleSlot = {
  *     suelo se satura, en cuyo caso el evento lo completa la telemetria.
  */
 export class ScheduledIrrigationService {
-  private lastProcessedMinute = '';
+  private lastTickMs = Date.now();
+
+  // Si el proceso estuvo dormido (Render free se suspende sin trafico),
+  // recuperar horarios perdidos de hasta 10 minutos atras al despertar.
+  private static readonly MAX_CATCHUP_MINUTES = 10;
 
   constructor(
     private readonly devices: DeviceRepository,
@@ -34,30 +38,68 @@ export class ScheduledIrrigationService {
   ) {}
 
   async tick(now: Date = new Date()): Promise<void> {
-    const minute = this.currentMinute(now);
-    if (minute !== this.lastProcessedMinute) {
-      this.lastProcessedMinute = minute;
-      await this.startDueSchedules(minute);
+    const minutes = this.minutesSinceLastTick(now);
+    if (minutes.length > 0) {
+      await this.startDueSchedules(minutes);
     }
     await this.stopExpiredScheduledRuns(now);
   }
 
-  private async startDueSchedules(minute: string): Promise<void> {
+  /**
+   * Minutos HH:MM cuyos limites se cruzaron desde el ultimo tick (con tope
+   * de catch-up). Antes se comparaba solo el minuto exacto del tick: si el
+   * backend dormia a la hora programada, el riego se perdia para siempre.
+   */
+  private minutesSinceLastTick(now: Date): string[] {
+    const MINUTE_MS = 60_000;
+    const start = Math.max(
+      this.lastTickMs,
+      now.getTime() -
+        ScheduledIrrigationService.MAX_CATCHUP_MINUTES * MINUTE_MS,
+    );
+    this.lastTickMs = now.getTime();
+
+    const result: string[] = [];
+    let t = (Math.floor(start / MINUTE_MS) + 1) * MINUTE_MS;
+    for (; t <= now.getTime(); t += MINUTE_MS) {
+      result.push(this.currentMinute(new Date(t)));
+    }
+    return result;
+  }
+
+  private async startDueSchedules(minutes: string[]): Promise<void> {
+    const dueMinutes = new Set(minutes);
     const allSettings = await this.devices.getAllSettings();
 
     for (const { deviceId, settings } of allSettings) {
       const schedules = this.parseSchedules(settings['schedules']);
       const due = schedules.some(
-        (slot) => slot.enabled && slot.timeText === minute,
+        (slot) => slot.enabled && dueMinutes.has(slot.timeText),
       );
       if (!due) continue;
 
       try {
         const device = await this.devices.findById(deviceId);
-        if (!device || device.status !== 'online') continue;
+        if (!device || device.status !== 'online') {
+          console.warn(
+            `[Scheduler] Horario omitido: dispositivo no online (${deviceId})`,
+          );
+          continue;
+        }
+        if (!device.isActive) {
+          console.warn(
+            `[Scheduler] Horario omitido: dispositivo en pausa (${deviceId})`,
+          );
+          continue;
+        }
 
         const running = await this.events.findRunningByDeviceId(deviceId);
-        if (running) continue;
+        if (running) {
+          console.warn(
+            `[Scheduler] Horario omitido: riego ya en curso (${deviceId})`,
+          );
+          continue;
+        }
 
         const command = await this.edgeGateway.queueOpenValve(deviceId);
         await this.devices.updateValveState(deviceId, 'open');
@@ -71,10 +113,13 @@ export class ScheduledIrrigationService {
           status: 'running',
           wasSkipped: false,
           commandId: command.id,
+          // Snapshot de las condiciones al iniciar (para el historial).
+          soilMoisturePct: device.lastTelemetry?.soilMoisturePct,
+          temperatureC: device.lastTelemetry?.temperatureC,
         };
         await this.events.save(event);
         console.log(
-          `[Scheduler] Riego programado iniciado (${deviceId}, ${minute})`,
+          `[Scheduler] Riego programado iniciado (${deviceId}, ${minutes.join(',')})`,
         );
       } catch (err) {
         console.error(

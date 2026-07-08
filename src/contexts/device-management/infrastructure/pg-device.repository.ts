@@ -159,6 +159,19 @@ export class PgDeviceRepository implements DeviceRepository {
     return rowToDevice(row);
   }
 
+  async updateIsActive(deviceId: string, isActive: boolean): Promise<Device> {
+    const rows = await this.sql<DeviceRow[]>`
+      UPDATE devices
+      SET is_active  = ${isActive},
+          updated_at = NOW()
+      WHERE id = ${deviceId}
+      RETURNING *
+    `;
+    const row = rows[0];
+    if (!row) throw notFound('Device not found');
+    return rowToDevice(row);
+  }
+
   async getSettings(deviceId: string): Promise<Record<string, unknown>> {
     const rows = await this.sql<{ settings: Record<string, unknown> }[]>`
       SELECT settings FROM device_settings WHERE device_id = ${deviceId}
