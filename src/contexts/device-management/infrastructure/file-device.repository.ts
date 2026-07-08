@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { notFound } from '../../../shared/http/http-error.js';
 import { JsonStore } from '../../../shared/persistence/json-store.js';
 import type { Device, ValveState } from '../domain/device.js';
-import { touchDevice } from '../domain/device.js';
+import { touchDevice, withEffectiveStatus } from '../domain/device.js';
 import type { DeviceStatus } from '../domain/device-status.js';
 import type { DeviceRepository } from '../domain/repositories/device-repository.js';
 import type { SensorReading } from '../domain/sensor-reading.js';
@@ -30,14 +30,19 @@ export class FileDeviceRepository implements DeviceRepository {
     );
   }
 
+  // Toda lectura pasa por withEffectiveStatus: 'online' solo con telemetria
+  // reciente del ESP32 (si esta apagado, la app lo ve "Sin conexion").
   async findById(deviceId: string): Promise<Device | undefined> {
     const data = await this.store.read();
-    return data.devices.find((device) => device.id === deviceId);
+    const device = data.devices.find((device) => device.id === deviceId);
+    return device ? withEffectiveStatus(device) : undefined;
   }
 
   async findByAccountId(accountId: string): Promise<Device[]> {
     const data = await this.store.read();
-    return data.devices.filter((device) => device.accountId === accountId);
+    return data.devices
+      .filter((device) => device.accountId === accountId)
+      .map(withEffectiveStatus);
   }
 
   async save(device: Device): Promise<Device> {
@@ -136,6 +141,6 @@ export class FileDeviceRepository implements DeviceRepository {
     const updated = touchDevice(updateFn(current));
     data.devices[index] = updated;
     await this.store.write(data);
-    return updated;
+    return withEffectiveStatus(updated);
   }
 }
