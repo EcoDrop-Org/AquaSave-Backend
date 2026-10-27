@@ -67,6 +67,26 @@ export const createIrrigationRouter = (services: AppServices) => {
     }),
   );
 
+  // Dato curioso de la planta, para la ficha. Rota en cada visita.
+  router.get(
+    '/devices/:deviceId/fact',
+    asyncHandler(async (req, res) => {
+      const { accountId } = requireAuth(req);
+      const deviceId = param(req.params, 'deviceId');
+      const device =
+        await services.deviceManagement.repository.findById(deviceId);
+      if (!device || device.accountId !== accountId) {
+        throw notFound('Device not found');
+      }
+
+      const fact = await services.irrigationIntelligence.plantFact.getFact(
+        device.speciesId,
+        device.cropType,
+      );
+      res.json({ fact });
+    }),
+  );
+
   // Plantas disponibles para preguntar en el chat.
   router.get(
     '/chat/plants',

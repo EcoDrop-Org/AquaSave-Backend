@@ -23,8 +23,9 @@ import { GetIrrigationStateQuery } from './contexts/irrigation-intelligence/appl
 import { GetWeatherForecastQuery } from './contexts/irrigation-intelligence/application/get-weather-forecast.query.js';
 import { GetRecommendationQuery } from './contexts/irrigation-intelligence/application/get-recommendation.query.js';
 import { PlantChatService } from './contexts/irrigation-intelligence/application/plant-chat.service.js';
+import { PlantFactService } from './contexts/irrigation-intelligence/application/plant-fact.service.js';
 import { GeminiAdviceService } from './contexts/irrigation-intelligence/infrastructure/gemini-advice.service.js';
-import { WikipediaPlantInfoService } from './contexts/irrigation-intelligence/infrastructure/wikipedia-plant-info.service.js';
+import { PlantInfoService } from './contexts/irrigation-intelligence/infrastructure/plant-info.service.js';
 import { ListIrrigationEventsQuery } from './contexts/irrigation-intelligence/application/list-irrigation-events.query.js';
 import { ScheduledIrrigationService } from './contexts/irrigation-intelligence/application/scheduled-irrigation.service.js';
 import { StartIrrigationService } from './contexts/irrigation-intelligence/application/start-irrigation.service.js';
@@ -67,7 +68,7 @@ export const buildServices = (env: AppEnv, sql?: PgClient) => {
     env.geminiModel,
   );
   // Wikipedia: sin API key, sin cuota, y resuelve cualquier planta.
-  const plantInfoService = new WikipediaPlantInfoService();
+  const plantInfoService = new PlantInfoService();
 
   return {
     identityAccess: {
@@ -130,6 +131,7 @@ export const buildServices = (env: AppEnv, sql?: PgClient) => {
         weatherService,
       ),
       plantInfo: plantInfoService,
+      plantFact: new PlantFactService(geminiAdvice),
       plantChat: new PlantChatService(
         deviceRepository,
         userRepository,
