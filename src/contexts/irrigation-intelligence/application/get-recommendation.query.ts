@@ -11,7 +11,7 @@ import {
 import type { CareTip } from '../domain/recommendation.js';
 import type { WeatherIntegrationService } from '../domain/ports/weather-integration-service.js';
 import type { GeminiAdviceService } from '../infrastructure/gemini-advice.service.js';
-import type { PerenualPlantInfoService } from '../infrastructure/perenual-plant-info.service.js';
+import type { WikipediaPlantInfoService } from '../infrastructure/wikipedia-plant-info.service.js';
 
 /** Cuanto se reutiliza una recomendacion antes de recalcularla. */
 const CACHE_TTL_MS = 10 * 60 * 1000;
@@ -33,7 +33,7 @@ export class GetRecommendationQuery {
     private readonly users: UserRepository,
     private readonly weather: WeatherIntegrationService,
     private readonly gemini: GeminiAdviceService,
-    private readonly plantInfo: PerenualPlantInfoService,
+    private readonly plantInfo: WikipediaPlantInfoService,
   ) {}
 
   async execute(deviceId: string, accountId: string): Promise<Recommendation> {
@@ -92,7 +92,8 @@ export class GetRecommendationQuery {
       }
     }
 
-    const info = await this.plantInfo.getInfo(species);
+    // Con "Otra planta" el nombre lo escribio el usuario (va en cropType).
+    const info = await this.plantInfo.getInfo(species, device.cropType);
 
     const now = Date.now();
     const recommendation: Recommendation = {
