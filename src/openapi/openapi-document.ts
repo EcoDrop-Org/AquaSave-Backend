@@ -47,7 +47,18 @@ export const openApiDocument = {
           fullName: { type: 'string' },
           profileType: {
             type: 'string',
-            enum: ['horticultor-urbano', 'micro-agricultor-periurbano'],
+            description:
+              'Segmento del usuario. Los valores horticultor-urbano y ' +
+              'micro-agricultor-periurbano son de la segmentacion anterior: ' +
+              'se aceptan por compatibilidad y se normalizan a principiante ' +
+              'y experto respectivamente.',
+            enum: [
+              'principiante',
+              'experto',
+              'horticultor-urbano',
+              'micro-agricultor-periurbano',
+            ],
+            example: 'principiante',
           },
           spaceType: { type: 'string', example: 'Terraza' },
           cropTypes: {
@@ -136,8 +147,25 @@ export const openApiDocument = {
           },
           firmwareVersion: { type: 'string' },
           isActive: { type: 'boolean' },
-          plantCount: { type: 'integer' },
-          cropType: { type: 'string' },
+          plantCount: {
+            type: 'integer',
+            deprecated: true,
+            description:
+              'Un dispositivo de riego atiende una planta: siempre vale 1. ' +
+              'Se conserva por compatibilidad.',
+          },
+          cropType: { type: 'string', description: 'Nota libre del usuario.' },
+          speciesId: {
+            type: 'string',
+            description: 'Especie de la planta; define los umbrales de riego.',
+            example: 'albahaca',
+          },
+          hasIrrigationDevice: {
+            type: 'boolean',
+            description:
+              'false cuando la planta existe pero aun no tiene un ' +
+              'dispositivo de riego reportando.',
+          },
           valveState: { type: 'string', enum: ['open', 'closed'] },
           lastTelemetry: { $ref: '#/components/schemas/SensorReading' },
           createdAt: { type: 'string', format: 'date-time' },
@@ -186,6 +214,63 @@ export const openApiDocument = {
           commandId: { type: 'string' },
         },
       },
+      Recommendation: {
+        type: 'object',
+        properties: {
+          deviceId: { type: 'string' },
+          speciesId: { type: 'string', example: 'albahaca' },
+          speciesName: { type: 'string', example: 'Albahaca' },
+          irrigation: {
+            type: 'object',
+            description:
+              'Decision de riego. level y reason salen siempre del motor de ' +
+              'reglas; source dice si el texto lo redacto la IA.',
+            properties: {
+              level: { type: 'string', enum: ['ok', 'watch', 'act'] },
+              title: { type: 'string', example: 'Hora de regar' },
+              body: { type: 'string' },
+              reason: {
+                type: 'string',
+                example: 'Humedad 32% < minimo 45%.',
+              },
+              source: { type: 'string', enum: ['rules', 'ai'] },
+            },
+          },
+          care: {
+            type: 'object',
+            description:
+              'Cuidados de la especie. No dependen del sensor: sirven ' +
+              'aunque no haya dispositivo vinculado.',
+            properties: {
+              tips: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    icon: {
+                      type: 'string',
+                      enum: ['sun', 'water', 'bug', 'leaf'],
+                    },
+                    title: { type: 'string' },
+                    body: { type: 'string' },
+                  },
+                },
+              },
+              source: { type: 'string', enum: ['rules', 'ai'] },
+            },
+          },
+          info: {
+            type: 'object',
+            description: 'Ficha de la especie (Perenual). Puede faltar.',
+            properties: {
+              description: { type: 'string' },
+              imageUrl: { type: 'string', format: 'uri' },
+            },
+          },
+          generatedAt: { type: 'string', format: 'date-time' },
+          validUntil: { type: 'string', format: 'date-time' },
+        },
+      },
       IrrigationState: {
         type: 'object',
         properties: {
@@ -200,6 +285,12 @@ export const openApiDocument = {
         type: 'object',
         properties: {
           deviceId: { type: 'string' },
+          isEstimated: {
+            type: 'boolean',
+            description:
+              'true cuando el proveedor externo no respondio y estos son ' +
+              'valores por defecto, no una medicion real.',
+          },
           locationName: { type: 'string' },
           latitude: { type: 'number' },
           longitude: { type: 'number' },
@@ -359,6 +450,27 @@ export const openApiDocument = {
         ],
         responses: {
           '200': objectResponse('WeatherForecast', 'Weather forecast', 'forecast'),
+        },
+      },
+    },
+    '/api/irrigation/devices/{deviceId}/recommendation': {
+      get: {
+        tags: ['Irrigation Intelligence'],
+        summary: 'Recomendacion de riego, cuidados de la especie y ficha',
+        description:
+          'La decision de riego sale siempre del motor de reglas local ' +
+          '(humedad del suelo + umbrales de la especie + clima). Gemini, si ' +
+          'hay cuota, solo reescribe el texto y amplia los consejos: ' +
+          'source indica cual se uso. Los cuidados sirven aunque la planta ' +
+          'todavia no tenga dispositivo de riego vinculado.',
+        security: [{ bearerAuth: [] }],
+        parameters: [deviceIdParam()],
+        responses: {
+          '200': objectResponse(
+            'Recommendation',
+            'Recomendacion de la planta',
+            'recommendation',
+          ),
         },
       },
     },
