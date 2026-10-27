@@ -10,6 +10,7 @@ export type PairDeviceInput = {
   location: GeoLocation;
   plantCount?: number;
   cropType?: string;
+  speciesId?: string;
   firmwareVersion?: string;
 };
 
@@ -26,8 +27,10 @@ export class PairDeviceService {
       status: 'offline',
       firmwareVersion: input.firmwareVersion,
       isActive: true,
-      plantCount: input.plantCount ?? 1,
+      // Una planta por dispositivo de riego.
+      plantCount: 1,
       cropType: input.cropType,
+      speciesId: input.speciesId,
       valveState: 'closed',
       createdAt: now,
       updatedAt: now,

@@ -18,6 +18,7 @@ type DeviceRow = {
   is_active: boolean;
   plant_count: number;
   crop_type: string | null;
+  species_id: string | null;
   valve_state: string;
   last_telemetry: SensorReading | null;
   created_at: Date;
@@ -41,6 +42,7 @@ const rowToDevice = (row: DeviceRow): Device =>
     isActive: row.is_active,
     plantCount: row.plant_count,
     cropType: row.crop_type ?? undefined,
+    speciesId: row.species_id ?? undefined,
     valveState: row.valve_state as ValveState,
     lastTelemetry: row.last_telemetry ?? undefined,
     createdAt: row.created_at.toISOString(),
@@ -71,6 +73,7 @@ export class PgDeviceRepository implements DeviceRepository {
         id, account_id, name,
         location_label, location_latitude, location_longitude,
         status, firmware_version, is_active, plant_count, crop_type,
+        species_id,
         valve_state, last_telemetry, created_at, updated_at
       ) VALUES (
         ${device.id},
@@ -84,6 +87,7 @@ export class PgDeviceRepository implements DeviceRepository {
         ${device.isActive},
         ${device.plantCount},
         ${device.cropType ?? null},
+        ${device.speciesId ?? null},
         ${device.valveState},
         ${device.lastTelemetry ? this.sql.json(device.lastTelemetry) : null},
         ${device.createdAt},
@@ -105,6 +109,7 @@ export class PgDeviceRepository implements DeviceRepository {
           is_active          = ${device.isActive},
           plant_count        = ${device.plantCount},
           crop_type          = ${device.cropType ?? null},
+          species_id         = ${device.speciesId ?? null},
           valve_state        = ${device.valveState},
           last_telemetry     = ${device.lastTelemetry ? this.sql.json(device.lastTelemetry) : null},
           updated_at         = NOW()

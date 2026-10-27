@@ -8,6 +8,7 @@ import {
   requireAuth,
 } from '../../../../shared/http/auth.middleware.js';
 import { param } from '../../../../shared/http/params.js';
+import { toDeviceView } from '../../domain/device.js';
 import { notFound } from '../../../../shared/http/http-error.js';
 
 const locationSchema = z.object({
@@ -19,8 +20,10 @@ const locationSchema = z.object({
 const pairDeviceSchema = z.object({
   name: z.string().min(3),
   location: locationSchema,
+  // Un dispositivo atiende una planta: plantCount se ignora y queda en 1.
   plantCount: z.number().int().min(1).max(1000).optional(),
   cropType: z.string().min(2).optional(),
+  speciesId: z.string().min(2).max(40).optional(),
   firmwareVersion: z.string().min(1).optional(),
 });
 
@@ -29,6 +32,7 @@ const updateDeviceSchema = z.object({
   location: locationSchema.optional(),
   plantCount: z.number().int().min(1).max(1000).optional(),
   cropType: z.string().min(2).nullable().optional(),
+  speciesId: z.string().min(2).max(40).optional(),
 });
 
 export const createDeviceRouter = (services: AppServices) => {
@@ -43,7 +47,7 @@ export const createDeviceRouter = (services: AppServices) => {
       const devices = await services.deviceManagement.listDevices.execute(
         accountId,
       );
-      res.json({ devices });
+      res.json({ devices: devices.map(toDeviceView) });
     }),
   );
 
@@ -56,7 +60,7 @@ export const createDeviceRouter = (services: AppServices) => {
         ...input,
         accountId,
       });
-      res.status(201).json({ device });
+      res.status(201).json({ device: toDeviceView(device) });
     }),
   );
 
@@ -68,7 +72,7 @@ export const createDeviceRouter = (services: AppServices) => {
         param(req.params, 'deviceId'),
         accountId,
       );
-      res.json({ device });
+      res.json({ device: toDeviceView(device) });
     }),
   );
 
@@ -82,7 +86,7 @@ export const createDeviceRouter = (services: AppServices) => {
         deviceId: param(req.params, 'deviceId'),
         accountId,
       });
-      res.json({ device });
+      res.json({ device: toDeviceView(device) });
     }),
   );
 
@@ -110,7 +114,7 @@ export const createDeviceRouter = (services: AppServices) => {
       if (!existing || existing.accountId !== accountId) throw notFound('Device not found');
       await services.irrigationIntelligence.edgeGateway.queuePauseDevice(deviceId);
       const device = await services.deviceManagement.repository.updateIsActive(deviceId, false);
-      res.json({ device });
+      res.json({ device: toDeviceView(device) });
     }),
   );
 
@@ -123,7 +127,7 @@ export const createDeviceRouter = (services: AppServices) => {
       if (!existing || existing.accountId !== accountId) throw notFound('Device not found');
       await services.irrigationIntelligence.edgeGateway.queueResumeDevice(deviceId);
       const device = await services.deviceManagement.repository.updateIsActive(deviceId, true);
-      res.json({ device });
+      res.json({ device: toDeviceView(device) });
     }),
   );
 

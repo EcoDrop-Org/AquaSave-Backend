@@ -12,8 +12,17 @@ export type Device = {
   status: DeviceStatus;
   firmwareVersion?: string;
   isActive: boolean;
+  /**
+   * Un dispositivo de riego atiende UNA planta. Se conserva por compatibilidad
+   * con las filas existentes, pero siempre vale 1 en los registros nuevos.
+   *
+   * @deprecated usar speciesId; ver DOCS-BACKEND-PENDIENTE.md seccion 3.1.
+   */
   plantCount: number;
+  /** Nota libre del usuario sobre la planta. */
   cropType?: string;
+  /** Especie de la planta (ver plant-species.ts). Define los umbrales. */
+  speciesId?: string;
   valveState: ValveState;
   lastTelemetry?: SensorReading;
   createdAt: string;
@@ -47,3 +56,20 @@ export const withEffectiveStatus = (device: Device): Device => {
 
   return stale ? { ...device, status: 'offline' } : device;
 };
+
+/**
+ * Vista del dispositivo para la API: agrega si ya tiene un dispositivo de
+ * riego reportando.
+ *
+ * El front necesita distinguir "planta sin dispositivo" de "dispositivo
+ * desconectado": son estados muy distintos para el usuario. Sin este campo lo
+ * tendria que inferir de lastTelemetry, que es ambiguo.
+ */
+export type DeviceView = Device & { hasIrrigationDevice: boolean };
+
+export const toDeviceView = (device: Device): DeviceView => ({
+  ...device,
+  // Si nunca reporto telemetria, la planta existe pero aun no tiene un
+  // dispositivo de riego vinculado.
+  hasIrrigationDevice: device.lastTelemetry !== undefined,
+});

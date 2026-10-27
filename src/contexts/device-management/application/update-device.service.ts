@@ -10,6 +10,7 @@ export type UpdateDeviceInput = {
   location?: GeoLocation;
   plantCount?: number;
   cropType?: string | null;
+  speciesId?: string;
 };
 
 export class UpdateDeviceService {
@@ -32,6 +33,7 @@ export class UpdateDeviceService {
         input.cropType === null
           ? undefined
           : input.cropType ?? device.cropType,
+      speciesId: input.speciesId ?? device.speciesId,
     });
 
     return this.devices.update(updated);
