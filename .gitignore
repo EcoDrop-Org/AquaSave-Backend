@@ -5,3 +5,4 @@ data/
 npm-debug.log*
 .claude
 .env.example
+data-e2e/
