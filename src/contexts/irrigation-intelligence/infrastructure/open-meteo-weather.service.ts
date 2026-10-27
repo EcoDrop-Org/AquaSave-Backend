@@ -135,6 +135,7 @@ const fallbackForecast = (device: Device): WeatherForecast => ({
   precipitationMm: 0,
   windSpeedKmh: 0,
   conditionLabel: 'Clima estimado',
+  isEstimated: true,
   retrievedAt: new Date().toISOString(),
   validUntil: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
 });
@@ -163,6 +164,8 @@ const toForecast = (
     precipitationMm: Number(current.precipitation ?? 0),
     windSpeedKmh: Number(current.wind_speed_10m ?? 0),
     conditionLabel: conditionLabel(weatherCode),
+    // Datos reales del proveedor, no estimados.
+    isEstimated: false,
     retrievedAt,
     validUntil: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
   };

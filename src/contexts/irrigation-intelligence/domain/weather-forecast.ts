@@ -10,6 +10,12 @@ export type WeatherForecast = {
   precipitationMm: number;
   windSpeedKmh: number;
   conditionLabel: string;
+  /**
+   * true cuando el proveedor externo no respondio y estos son valores por
+   * defecto, no una medicion. La app lo avisa para que el usuario no lea
+   * 20 C como si fuera la temperatura real de su zona.
+   */
+  isEstimated: boolean;
   retrievedAt: string;
   validUntil: string;
 };
