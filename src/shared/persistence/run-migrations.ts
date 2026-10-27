@@ -7,7 +7,7 @@ export const runMigrations = async (sql: PgClient): Promise<void> => {
       email         TEXT NOT NULL UNIQUE,
       password_hash TEXT NOT NULL,
       full_name     TEXT NOT NULL,
-      profile_type  TEXT NOT NULL DEFAULT 'horticultor-urbano',
+      profile_type  TEXT NOT NULL DEFAULT 'principiante',
       space_type    TEXT,
       crop_types    TEXT[] NOT NULL DEFAULT '{}',
       location_city TEXT,
@@ -109,5 +109,39 @@ export const runMigrations = async (sql: PgClient): Promise<void> => {
   await sql`
     ALTER TABLE irrigation_events
       ADD COLUMN IF NOT EXISTS temperature_c DOUBLE PRECISION
+  `;
+
+  // ── Segmentos objetivo: de geograficos a nivel de experiencia ─────────────
+  //
+  // El informe (seccion 1.3) define los segmentos por experiencia cuidando
+  // plantas: principiante y experto. La tabla se creo con la segmentacion
+  // anterior (geografica), asi que las cuentas existentes se mapean al
+  // segmento equivalente. Es idempotente: tras la primera corrida no hay
+  // filas que actualizar.
+  await sql`
+    UPDATE users SET profile_type = 'principiante'
+      WHERE profile_type = 'horticultor-urbano'
+  `;
+
+  await sql`
+    UPDATE users SET profile_type = 'experto'
+      WHERE profile_type = 'micro-agricultor-periurbano'
+  `;
+
+  await sql`
+    ALTER TABLE users
+      ALTER COLUMN profile_type SET DEFAULT 'principiante'
+  `;
+
+  // Una planta por dispositivo de riego: la especie reemplaza a plant_count.
+  // plant_count se deja con default para no romper filas existentes.
+  await sql`
+    ALTER TABLE devices
+      ADD COLUMN IF NOT EXISTS species_id TEXT
+  `;
+
+  await sql`
+    ALTER TABLE devices
+      ALTER COLUMN plant_count SET DEFAULT 1
   `;
 };
