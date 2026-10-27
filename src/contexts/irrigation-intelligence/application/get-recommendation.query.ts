@@ -11,7 +11,7 @@ import {
 import type { CareTip } from '../domain/recommendation.js';
 import type { WeatherIntegrationService } from '../domain/ports/weather-integration-service.js';
 import type { GeminiAdviceService } from '../infrastructure/gemini-advice.service.js';
-import type { WikipediaPlantInfoService } from '../infrastructure/wikipedia-plant-info.service.js';
+import type { PlantInfoService } from '../infrastructure/plant-info.service.js';
 
 /** Cuanto se reutiliza una recomendacion antes de recalcularla. */
 const CACHE_TTL_MS = 10 * 60 * 1000;
@@ -33,7 +33,7 @@ export class GetRecommendationQuery {
     private readonly users: UserRepository,
     private readonly weather: WeatherIntegrationService,
     private readonly gemini: GeminiAdviceService,
-    private readonly plantInfo: WikipediaPlantInfoService,
+    private readonly plantInfo: PlantInfoService,
   ) {}
 
   async execute(deviceId: string, accountId: string): Promise<Recommendation> {

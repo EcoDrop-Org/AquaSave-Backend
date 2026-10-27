@@ -251,7 +251,7 @@ export const PLANT_SPECIES: readonly PlantSpecies[] = [
     careTip:
       'Riega poco y espaciado. Guarda agua en sus hojas: el exceso ' +
       'la pudre.',
-    scientificName: 'Planta suculenta',
+    scientificName: 'Crassulaceae',
   },
   {
     id: 'cactus',
