@@ -24,6 +24,7 @@ import { GetWeatherForecastQuery } from './contexts/irrigation-intelligence/appl
 import { GetRecommendationQuery } from './contexts/irrigation-intelligence/application/get-recommendation.query.js';
 import { PlantChatService } from './contexts/irrigation-intelligence/application/plant-chat.service.js';
 import { PlantFactService } from './contexts/irrigation-intelligence/application/plant-fact.service.js';
+import { PlantSuggestionsService } from './contexts/irrigation-intelligence/application/plant-suggestions.service.js';
 import { GeminiAdviceService } from './contexts/irrigation-intelligence/infrastructure/gemini-advice.service.js';
 import { PlantInfoService } from './contexts/irrigation-intelligence/infrastructure/plant-info.service.js';
 import { ListIrrigationEventsQuery } from './contexts/irrigation-intelligence/application/list-irrigation-events.query.js';
@@ -133,6 +134,7 @@ export const buildServices = (env: AppEnv, sql?: PgClient) => {
       ),
       plantInfo: plantInfoService,
       plantFact: new PlantFactService(geminiAdvice),
+      plantSuggestions: new PlantSuggestionsService(geminiAdvice),
       plantChat: new PlantChatService(
         deviceRepository,
         userRepository,

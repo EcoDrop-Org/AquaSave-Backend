@@ -67,6 +67,18 @@ export const createIrrigationRouter = (services: AppServices) => {
     }),
   );
 
+  // Sugerencias con foto para el nombre que escribe el usuario.
+  router.get(
+    '/plant-suggestions',
+    asyncHandler(async (req, res) => {
+      requireAuth(req);
+      const term = String(req.query.q ?? '').trim().slice(0, 80);
+      const suggestions =
+        await services.irrigationIntelligence.plantSuggestions.suggest(term);
+      res.json({ suggestions });
+    }),
+  );
+
   // Ficha de las plantas de la cuenta, resuelta por dispositivo.
   //
   // No basta con species-info: las plantas creadas como "Otra planta"

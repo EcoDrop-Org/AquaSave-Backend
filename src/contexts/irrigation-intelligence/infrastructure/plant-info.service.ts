@@ -169,7 +169,7 @@ export class PlantInfoService {
   private async fetchPhoto(term: string): Promise<string | undefined> {
     const url = new URL('https://api.inaturalist.org/v1/taxa');
     url.searchParams.set('q', term);
-    url.searchParams.set('per_page', '1');
+    url.searchParams.set('per_page', '10');
 
     const response = await fetch(url, {
       headers: { 'user-agent': USER_AGENT, accept: 'application/json' },
@@ -178,9 +178,18 @@ export class PlantInfoService {
     if (!response.ok) return undefined;
 
     const body = (await response.json()) as {
-      results?: { default_photo?: { medium_url?: string } | null }[];
+      results?: {
+        iconic_taxon_name?: string;
+        default_photo?: { medium_url?: string } | null;
+      }[];
     };
-    return body.results?.[0]?.default_photo?.medium_url ?? undefined;
+
+    // El filtro iconic_taxa de la API no funciona: sin filtrar aqui,
+    // "carnivora" devuelve el orden de mamiferos antes que la planta.
+    const plant = (body.results ?? []).find(
+      (t) => t.iconic_taxon_name === 'Plantae' && t.default_photo?.medium_url,
+    );
+    return plant?.default_photo?.medium_url ?? undefined;
   }
 
   /** Descripcion generada por el LLM, cuando las fuentes no la traen. */
