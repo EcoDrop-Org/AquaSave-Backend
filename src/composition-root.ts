@@ -22,8 +22,9 @@ import { PgDeviceRepository } from './contexts/device-management/infrastructure/
 import { GetIrrigationStateQuery } from './contexts/irrigation-intelligence/application/get-irrigation-state.query.js';
 import { GetWeatherForecastQuery } from './contexts/irrigation-intelligence/application/get-weather-forecast.query.js';
 import { GetRecommendationQuery } from './contexts/irrigation-intelligence/application/get-recommendation.query.js';
+import { PlantChatService } from './contexts/irrigation-intelligence/application/plant-chat.service.js';
 import { GeminiAdviceService } from './contexts/irrigation-intelligence/infrastructure/gemini-advice.service.js';
-import { PerenualPlantInfoService } from './contexts/irrigation-intelligence/infrastructure/perenual-plant-info.service.js';
+import { WikipediaPlantInfoService } from './contexts/irrigation-intelligence/infrastructure/wikipedia-plant-info.service.js';
 import { ListIrrigationEventsQuery } from './contexts/irrigation-intelligence/application/list-irrigation-events.query.js';
 import { ScheduledIrrigationService } from './contexts/irrigation-intelligence/application/scheduled-irrigation.service.js';
 import { StartIrrigationService } from './contexts/irrigation-intelligence/application/start-irrigation.service.js';
@@ -65,7 +66,8 @@ export const buildServices = (env: AppEnv, sql?: PgClient) => {
     env.geminiApiKey,
     env.geminiModel,
   );
-  const plantInfoService = new PerenualPlantInfoService(env.perenualApiKey);
+  // Wikipedia: sin API key, sin cuota, y resuelve cualquier planta.
+  const plantInfoService = new WikipediaPlantInfoService();
 
   return {
     identityAccess: {
@@ -126,6 +128,12 @@ export const buildServices = (env: AppEnv, sql?: PgClient) => {
       getWeatherForecast: new GetWeatherForecastQuery(
         deviceRepository,
         weatherService,
+      ),
+      plantInfo: plantInfoService,
+      plantChat: new PlantChatService(
+        deviceRepository,
+        userRepository,
+        geminiAdvice,
       ),
       getRecommendation: new GetRecommendationQuery(
         deviceRepository,

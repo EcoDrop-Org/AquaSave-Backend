@@ -87,7 +87,8 @@ export class GeminiAdviceService {
       .join('\n');
   }
 
-  private async generate(prompt: string): Promise<string> {
+  /** Llama al modelo. `json` fuerza respuesta JSON (lo usa enrich). */
+  async generate(prompt: string, json = true): Promise<string> {
     const url =
       `https://generativelanguage.googleapis.com/v1beta/models/` +
       `${this.model}:generateContent`;
@@ -101,11 +102,11 @@ export class GeminiAdviceService {
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
-          temperature: 0.4,
+          temperature: json ? 0.4 : 0.7,
           // Con 600 el JSON se truncaba: los modelos recientes gastan
           // tokens de razonamiento antes del texto.
           maxOutputTokens: 2000,
-          responseMimeType: 'application/json',
+          ...(json ? { responseMimeType: 'application/json' } : {}),
         },
       }),
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),

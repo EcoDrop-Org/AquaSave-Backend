@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { z } from 'zod';
 
 import type { AppServices } from '../../../../composition-root.js';
 import { asyncHandler } from '../../../../shared/http/async-handler.js';
@@ -8,11 +9,88 @@ import {
 } from '../../../../shared/http/auth.middleware.js';
 import { param } from '../../../../shared/http/params.js';
 import { notFound } from '../../../../shared/http/http-error.js';
+import { speciesById } from '../../../device-management/domain/plant-species.js';
+
+const chatSchema = z.object({
+  message: z.string().min(1).max(500),
+  deviceId: z.string().min(1).optional(),
+  history: z
+    .array(
+      z.object({
+        role: z.enum(['user', 'assistant']),
+        text: z.string().min(1).max(2000),
+      }),
+    )
+    .max(20)
+    .optional(),
+});
 
 export const createIrrigationRouter = (services: AppServices) => {
   const router = Router();
 
   router.use(authMiddleware(services));
+
+  // Ficha (foto + descripcion) de varias especies de una vez: las tarjetas
+  // de "Mis plantas" las necesitan sin pedir una recomendacion completa.
+  router.get(
+    '/species-info',
+    asyncHandler(async (req, res) => {
+      requireAuth(req);
+      const raw = String(req.query.ids ?? '').trim();
+      const ids = raw
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean)
+        .slice(0, 40);
+
+      const entries = await Promise.all(
+        ids.map(async (id) => {
+          const species = speciesById(id);
+          const info = await services.irrigationIntelligence.plantInfo.getInfo(
+            species,
+          );
+          return [
+            id,
+            {
+              speciesName: species.commonName,
+              soilMinPct: species.soilMinPct,
+              soilMaxPct: species.soilMaxPct,
+              sunlight: species.sunlight,
+              description: info?.description,
+              imageUrl: info?.imageUrl,
+            },
+          ] as const;
+        }),
+      );
+
+      res.json({ species: Object.fromEntries(entries) });
+    }),
+  );
+
+  // Plantas disponibles para preguntar en el chat.
+  router.get(
+    '/chat/plants',
+    asyncHandler(async (req, res) => {
+      const { accountId } = requireAuth(req);
+      const plants =
+        await services.irrigationIntelligence.plantChat.listPlants(accountId);
+      res.json({ plants });
+    }),
+  );
+
+  // Chat sobre las plantas del usuario.
+  router.post(
+    '/chat',
+    asyncHandler(async (req, res) => {
+      const { accountId } = requireAuth(req);
+      const input = chatSchema.parse(req.body);
+      const reply = await services.irrigationIntelligence.plantChat.reply({
+        accountId,
+        ...input,
+      });
+      res.json({ reply });
+    }),
+  );
 
   // Recomendacion de la planta: riego (sensores + clima), cuidados de la
   // especie (sirven sin dispositivo) y ficha informativa.
