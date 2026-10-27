@@ -1,0 +1,94 @@
+{
+  "devices": [
+    {
+      "id": "42512466-eaee-4daf-977c-5faaa7d360ec",
+      "accountId": "11feb091-0248-4330-9733-a13fe9a2aaec",
+      "name": "Mi planta carnivora",
+      "location": {
+        "label": "Lima",
+        "latitude": -12.12,
+        "longitude": -77.03
+      },
+      "status": "offline",
+      "isActive": true,
+      "plantCount": 1,
+      "cropType": "planta carnivora",
+      "speciesId": "otra",
+      "valveState": "closed",
+      "createdAt": "2026-10-27T04:36:48.320Z",
+      "updatedAt": "2026-10-27T04:36:48.320Z"
+    },
+    {
+      "id": "31f1b582-f4ae-4ce8-bce1-b10ebcd356ea",
+      "accountId": "4a94b815-399a-41de-a484-048c808f99e3",
+      "name": "Mi loto",
+      "location": {
+        "label": "Lima",
+        "latitude": -12.12,
+        "longitude": -77.03
+      },
+      "status": "offline",
+      "isActive": true,
+      "plantCount": 1,
+      "cropType": "loto",
+      "speciesId": "otra",
+      "valveState": "closed",
+      "createdAt": "2026-10-27T04:41:25.741Z",
+      "updatedAt": "2026-10-27T04:41:25.741Z"
+    },
+    {
+      "id": "cf89a04c-0598-4c27-87a4-aac132b0fee9",
+      "accountId": "4a94b815-399a-41de-a484-048c808f99e3",
+      "name": "Mi lirio",
+      "location": {
+        "label": "Lima",
+        "latitude": -12.12,
+        "longitude": -77.03
+      },
+      "status": "offline",
+      "isActive": true,
+      "plantCount": 1,
+      "cropType": "lirio",
+      "speciesId": "otra",
+      "valveState": "closed",
+      "createdAt": "2026-10-27T04:41:31.037Z",
+      "updatedAt": "2026-10-27T04:41:31.037Z"
+    },
+    {
+      "id": "c7d21509-c727-4764-8c85-e6f27b5d74a2",
+      "accountId": "4a94b815-399a-41de-a484-048c808f99e3",
+      "name": "Mi tulipan",
+      "location": {
+        "label": "Lima",
+        "latitude": -12.12,
+        "longitude": -77.03
+      },
+      "status": "offline",
+      "isActive": true,
+      "plantCount": 1,
+      "cropType": "tulipan",
+      "speciesId": "otra",
+      "valveState": "closed",
+      "createdAt": "2026-10-27T04:41:33.663Z",
+      "updatedAt": "2026-10-27T04:41:33.663Z"
+    },
+    {
+      "id": "4c8f5ad6-5da2-4f58-acfc-8f93ce92364a",
+      "accountId": "4a94b815-399a-41de-a484-048c808f99e3",
+      "name": "Mi margarita",
+      "location": {
+        "label": "Lima",
+        "latitude": -12.12,
+        "longitude": -77.03
+      },
+      "status": "offline",
+      "isActive": true,
+      "plantCount": 1,
+      "cropType": "margarita",
+      "speciesId": "otra",
+      "valveState": "closed",
+      "createdAt": "2026-10-27T04:41:35.338Z",
+      "updatedAt": "2026-10-27T04:41:35.338Z"
+    }
+  ]
+}

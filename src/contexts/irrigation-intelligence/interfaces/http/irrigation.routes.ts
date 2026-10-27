@@ -67,6 +67,43 @@ export const createIrrigationRouter = (services: AppServices) => {
     }),
   );
 
+  // Ficha de las plantas de la cuenta, resuelta por dispositivo.
+  //
+  // No basta con species-info: las plantas creadas como "Otra planta"
+  // comparten el id 'otra' y su nombre real esta en cropType, asi que la foto
+  // solo se puede resolver dispositivo a dispositivo.
+  router.get(
+    '/plants-info',
+    asyncHandler(async (req, res) => {
+      const { accountId } = requireAuth(req);
+      const devices =
+        await services.deviceManagement.repository.findByAccountId(accountId);
+
+      const entries = await Promise.all(
+        devices.slice(0, 40).map(async (device) => {
+          const species = speciesById(device.speciesId);
+          const info = await services.irrigationIntelligence.plantInfo.getInfo(
+            species,
+            device.cropType,
+          );
+          return [
+            device.id,
+            {
+              speciesName: species.commonName,
+              soilMinPct: species.soilMinPct,
+              soilMaxPct: species.soilMaxPct,
+              sunlight: species.sunlight,
+              description: info?.description,
+              imageUrl: info?.imageUrl,
+            },
+          ] as const;
+        }),
+      );
+
+      res.json({ plants: Object.fromEntries(entries) });
+    }),
+  );
+
   // Dato curioso de la planta, para la ficha. Rota en cada visita.
   router.get(
     '/devices/:deviceId/fact',
