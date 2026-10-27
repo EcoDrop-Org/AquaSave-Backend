@@ -15,6 +15,14 @@ export type AppEnv = {
   scheduleTimezone: string;
   /** Duracion maxima (min) de un riego iniciado por horario programado. */
   scheduledRunMinutes: number;
+  /**
+   * Key de Gemini para redactar recomendaciones. Opcional a proposito: sin
+   * ella el motor de reglas local responde igual (ver recommendation service).
+   */
+  geminiApiKey?: string;
+  geminiModel: string;
+  /** Key de Perenual para la ficha y foto de la especie. Opcional. */
+  perenualApiKey?: string;
 };
 
 const required = (name: string): string => {
@@ -48,4 +56,7 @@ export const env: AppEnv = {
   weatherProvider: 'open-meteo',
   scheduleTimezone: process.env.SCHEDULE_TIMEZONE ?? 'America/Lima',
   scheduledRunMinutes: Number(process.env.SCHEDULED_RUN_MINUTES ?? 5),
+  geminiApiKey: optional(process.env.GEMINI_API_KEY),
+  geminiModel: process.env.GEMINI_MODEL ?? 'gemini-3.5-flash-lite',
+  perenualApiKey: optional(process.env.PERENUAL_API_KEY),
 };

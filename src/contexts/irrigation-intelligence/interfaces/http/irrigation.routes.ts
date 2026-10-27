@@ -14,6 +14,22 @@ export const createIrrigationRouter = (services: AppServices) => {
 
   router.use(authMiddleware(services));
 
+  // Recomendacion de la planta: riego (sensores + clima), cuidados de la
+  // especie (sirven sin dispositivo) y ficha informativa.
+  router.get(
+    '/devices/:deviceId/recommendation',
+    asyncHandler(async (req, res) => {
+      const { accountId } = requireAuth(req);
+      const deviceId = param(req.params, 'deviceId');
+      const recommendation =
+        await services.irrigationIntelligence.getRecommendation.execute(
+          deviceId,
+          accountId,
+        );
+      res.json({ recommendation });
+    }),
+  );
+
   router.get(
     '/devices/:deviceId/state',
     asyncHandler(async (req, res) => {

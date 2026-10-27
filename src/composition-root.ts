@@ -21,6 +21,9 @@ import { FileDeviceRepository } from './contexts/device-management/infrastructur
 import { PgDeviceRepository } from './contexts/device-management/infrastructure/pg-device.repository.js';
 import { GetIrrigationStateQuery } from './contexts/irrigation-intelligence/application/get-irrigation-state.query.js';
 import { GetWeatherForecastQuery } from './contexts/irrigation-intelligence/application/get-weather-forecast.query.js';
+import { GetRecommendationQuery } from './contexts/irrigation-intelligence/application/get-recommendation.query.js';
+import { GeminiAdviceService } from './contexts/irrigation-intelligence/infrastructure/gemini-advice.service.js';
+import { PerenualPlantInfoService } from './contexts/irrigation-intelligence/infrastructure/perenual-plant-info.service.js';
 import { ListIrrigationEventsQuery } from './contexts/irrigation-intelligence/application/list-irrigation-events.query.js';
 import { ScheduledIrrigationService } from './contexts/irrigation-intelligence/application/scheduled-irrigation.service.js';
 import { StartIrrigationService } from './contexts/irrigation-intelligence/application/start-irrigation.service.js';
@@ -57,6 +60,12 @@ export const buildServices = (env: AppEnv, sql?: PgClient) => {
     ? new PgEdgeDeviceGateway(sql)
     : new FileEdgeDeviceGateway(env.dataDir);
   const weatherService = new OpenMeteoWeatherService();
+  // Ambos son opcionales: sin API key el motor de reglas responde igual.
+  const geminiAdvice = new GeminiAdviceService(
+    env.geminiApiKey,
+    env.geminiModel,
+  );
+  const plantInfoService = new PerenualPlantInfoService(env.perenualApiKey);
 
   return {
     identityAccess: {
@@ -117,6 +126,13 @@ export const buildServices = (env: AppEnv, sql?: PgClient) => {
       getWeatherForecast: new GetWeatherForecastQuery(
         deviceRepository,
         weatherService,
+      ),
+      getRecommendation: new GetRecommendationQuery(
+        deviceRepository,
+        userRepository,
+        weatherService,
+        geminiAdvice,
+        plantInfoService,
       ),
       syncPumpState: new SyncPumpStateService(
         deviceRepository,
