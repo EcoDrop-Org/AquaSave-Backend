@@ -13,8 +13,16 @@ const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
   fullName: z.string().min(2),
+  // Los dos primeros son los segmentos actuales (informe 1.3). Los dos
+  // ultimos son la segmentacion anterior: se siguen aceptando para no romper
+  // apps ya instaladas, y normalizeProfileType los convierte.
   profileType: z
-    .enum(['horticultor-urbano', 'micro-agricultor-periurbano'])
+    .enum([
+      'principiante',
+      'experto',
+      'horticultor-urbano',
+      'micro-agricultor-periurbano',
+    ])
     .optional(),
   spaceType: z.string().min(2).optional(),
   cropTypes: z.array(z.string().min(2)).optional(),

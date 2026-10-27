@@ -96,7 +96,7 @@ describe('IAM protected resources', () => {
         email,
         password: 'secure-password',
         fullName: email.split('@')[0],
-        profileType: 'horticultor-urbano',
+        profileType: 'principiante',
       },
     });
   };

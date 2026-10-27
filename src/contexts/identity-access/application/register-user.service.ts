@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import { conflict } from '../../../shared/http/http-error.js';
-import { normalizeProfileType, type ProfileType } from '../domain/profile-type.js';
+import { normalizeProfileType } from '../domain/profile-type.js';
 import type { User } from '../domain/user.js';
 import { toPublicUser, type PublicUser } from '../domain/user.js';
 import type { SessionRepository } from '../domain/repositories/session-repository.js';
@@ -13,7 +13,11 @@ export type RegisterUserInput = {
   email: string;
   password: string;
   fullName: string;
-  profileType?: ProfileType;
+  /**
+   * Segmento del usuario. Se recibe como string porque la API tambien acepta
+   * los valores de la segmentacion anterior; normalizeProfileType los mapea.
+   */
+  profileType?: string;
   spaceType?: string;
   cropTypes?: string[];
   locationCity?: string;
