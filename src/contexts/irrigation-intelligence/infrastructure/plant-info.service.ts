@@ -1,4 +1,5 @@
 import type { PlantSpecies } from '../../device-management/domain/plant-species.js';
+import type { GeminiAdviceService } from './gemini-advice.service.js';
 
 const FETCH_TIMEOUT_MS = 8_000;
 const USER_AGENT = 'AquaSave/1.0 (proyecto universitario UPC)';
@@ -18,10 +19,17 @@ export type PlantInfo = {
  *
  * Ninguna pide API key. Se consultan en paralelo y cada una se cachea por su
  * cuenta, asi un fallo de una no deja la ficha vacia.
+ *
+ * Como ultimo recurso la descripcion la redacta el LLM. La FOTO nunca: un
+ * modelo de texto no puede dar una URL de imagen que exista de verdad, y las
+ * que inventa dan 404.
  */
 export class PlantInfoService {
   private readonly wiki = new Map<string, WikiSummary>();
   private readonly images = new Map<string, string | undefined>();
+  private readonly aiDescriptions = new Map<string, string>();
+
+  constructor(private readonly gemini?: GeminiAdviceService) {}
 
   /** Siempre disponible: no necesita credenciales. */
   get enabled(): boolean {
@@ -50,8 +58,13 @@ export class PlantInfoService {
     // iNaturalist suele tener mejor foto de la especie; la de Wikipedia
     // cubre lo que no es un taxon ("planta carnivora").
     const imageUrl = photo ?? summary.imageUrl;
-    if (!summary.description && !imageUrl) return undefined;
-    return { description: summary.description, imageUrl };
+
+    // Sin descripcion de Wikipedia, la redacta el LLM.
+    const description =
+      summary.description ?? (await this.describeWithAi(term));
+
+    if (!description && !imageUrl) return undefined;
+    return { description, imageUrl };
   }
 
   // ── Descripcion: Wikipedia ────────────────────────────────────────────────
@@ -168,6 +181,45 @@ export class PlantInfoService {
       results?: { default_photo?: { medium_url?: string } | null }[];
     };
     return body.results?.[0]?.default_photo?.medium_url ?? undefined;
+  }
+
+  /** Descripcion generada por el LLM, cuando las fuentes no la traen. */
+  private async describeWithAi(term: string): Promise<string | undefined> {
+    if (!this.gemini?.enabled) return undefined;
+
+    const key = term.toLowerCase();
+    const cached = this.aiDescriptions.get(key);
+    if (cached) return cached;
+
+    try {
+      const text = await this.gemini.generate(
+        `Describe la planta "${term}" en dos frases: que es y de donde viene. ` +
+          'Sin consejos de cuidado. En espanol, sin markdown. ' +
+          'Responde SOLO con JSON: {"description":"..."}',
+      );
+      const parsed = JSON.parse(
+        text
+          .trim()
+          .replace(/^```(?:json)?/i, '')
+          .replace(/```$/, '')
+          .trim(),
+      ) as { description?: unknown };
+
+      const description =
+        typeof parsed.description === 'string'
+          ? parsed.description.trim()
+          : '';
+      if (description.length < 15) return undefined;
+
+      this.aiDescriptions.set(key, description);
+      return description;
+    } catch (err) {
+      console.warn(
+        `[PlantInfo] LLM no disponible (${term}):`,
+        err instanceof Error ? err.message : err,
+      );
+      return undefined;
+    }
   }
 }
 

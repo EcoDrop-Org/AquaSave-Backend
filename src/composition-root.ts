@@ -67,8 +67,9 @@ export const buildServices = (env: AppEnv, sql?: PgClient) => {
     env.geminiApiKey,
     env.geminiModel,
   );
-  // Wikipedia: sin API key, sin cuota, y resuelve cualquier planta.
-  const plantInfoService = new PlantInfoService();
+  // Wikipedia + iNaturalist (sin API key); el LLM redacta la descripcion
+  // solo si ninguna de las dos la trae.
+  const plantInfoService = new PlantInfoService(geminiAdvice);
 
   return {
     identityAccess: {
